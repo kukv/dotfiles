@@ -1,0 +1,100 @@
+# Managed by chezmoi — edit with: chezmoi edit ~/.config/mise/config.toml
+# ==========================================================================
+# settings
+# ==========================================================================
+[settings]
+experimental = true
+
+[settings.npm]
+package_manager = "pnpm"
+
+[settings.pipx]
+uvx = true
+
+# ==========================================================================
+# packages
+# ==========================================================================
+[tools]
+# [tools.jvm]
+java = [
+    "openjdk-25",
+    "openjdk-21",
+    "openjdk-17",
+]
+gradle = "latest"
+maven = "latest"
+kotlin = "latest"
+
+# [tools.node]
+node = [
+    "24",
+    "22",
+]
+pnpm = "latest"
+"npm:yarn" = "latest"
+
+# [tools.python]
+python = "3.14"
+uv = "latest"
+
+# [tools.ruby]
+ruby = [ "4", "3" ]
+
+# [tools.go]
+go = "latest"
+golangci-lint = "latest"
+gomigrate = "latest"
+gotestsum = "latest"
+skeema = "latest"
+
+# [tools.kubernetes]
+kubectl = "latest"
+helm = "latest"
+helmfile = "latest"
+k3d = "latest"
+cmctl = "latest"
+
+# [tools.vcs]
+github-cli = "latest"
+act = "latest"
+action-validator = "latest"
+actionlint = "latest"
+jj = "latest"
+"npm:difit" = "latest"
+
+# [tools.shells]
+shellcheck = "latest"
+neovim = "latest"
+peco = "latest"
+"pipx:sqlit-tui" = "latest"
+
+# [tools.json]
+jq = "latest"
+
+# [tools.yaml]
+yq = "latest"
+"pipx:yamllint" = "latest"
+
+# [tools.hashicorp]
+terraform = "latest"
+
+# [tools.network]
+cloudflared = "latest"
+
+# [tools.cli]
+ripgrep = "latest"
+fd = "latest"
+fzf = "latest"
+eza = "latest"
+bat = "latest"
+zoxide = "latest"
+ghq = "latest"
+
+# [tools.aws]
+aws-cli = { version = "latest", symlink_bins = "true" }
+aws-sam = { version = "latest", symlink_bins = "true" }
+"npm:aws-cdk" = "latest"
+
+# [tools.localstack]
+"pipx:awscli-local" = "latest"
+"npm:aws-cdk-local" = "latest"
