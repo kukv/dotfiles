@@ -1,0 +1,69 @@
+name: ci
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  apply:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install chezmoi
+        run: sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin"
+
+      - name: Seed chezmoi data (git identity)
+        run: |
+          mkdir -p "$HOME/.config/chezmoi"
+          cat > "$HOME/.config/chezmoi/chezmoi.toml" <<'EOF'
+          [data]
+              git_name = "CI User"
+              git_email = "ci@example.com"
+              git_signing_key = "ssh-ed25519 AAAATESTKEY"
+          EOF
+
+      - name: chezmoi apply to throwaway destination
+        run: |
+          DEST="$(mktemp -d)"
+          "$HOME/.local/bin/chezmoi" apply \
+            --source "$GITHUB_WORKSPACE" \
+            --destination "$DEST" \
+            --no-tty --verbose
+          echo "DEST=$DEST" >> "$GITHUB_ENV"
+
+      - name: Assert common content
+        run: |
+          test -f "$DEST/.zshrc"
+          grep -q 'eval "$(mise activate zsh)"' "$DEST/.zshrc"
+          grep -q 'quotepath = false' "$DEST/.gitconfig"
+          grep -q 'name = CI User' "$DEST/.gitconfig"
+          test -f "$DEST/.config/mise/config.toml"
+          grep -q 'k3d = "latest"' "$DEST/.config/mise/config.toml"
+          test -f "$DEST/.zshrc.local"
+          test -f "$DEST/.config/nvim/init.lua"
+
+      - name: Assert Linux-specific content
+        if: runner.os == 'Linux'
+        run: |
+          grep -q "alias ssh='ssh.exe'" "$DEST/.zshrc"
+          grep -q 'JOBMAX=$(nproc)' "$DEST/.zprofile"
+          grep -q 'linuxbrew' "$DEST/.zprofile"
+          ! grep -q 'op-ssh-sign' "$DEST/.gitconfig"
+          test ! -f "$DEST/.ssh/config"
+
+      - name: Assert macOS-specific content
+        if: runner.os == 'macOS'
+        run: |
+          ! grep -q "alias ssh='ssh.exe'" "$DEST/.zshrc"
+          grep -q '1password' "$DEST/.zshrc"
+          grep -q 'sysctl -n hw.logicalcpu' "$DEST/.zprofile"
+          grep -q 'opt/homebrew' "$DEST/.zprofile"
+          grep -q 'op-ssh-sign' "$DEST/.gitconfig"
+          test -f "$DEST/.ssh/config"
+          grep -q '1Password' "$DEST/.ssh/config"
