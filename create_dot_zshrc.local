@@ -1,0 +1,2 @@
+# ~/.zshrc.local — machine-local zsh config. NOT tracked by chezmoi after first creation.
+# Put secrets, environment variables, and per-machine tweaks here.
