@@ -1,0 +1,41 @@
+# Managed by chezmoi — edit with: chezmoi edit ~/.zprofile
+# Machine-local, untracked overrides go in ~/.zprofile.local
+
+export PATH="$HOME/.local/bin:$PATH"
+{{ if eq .chezmoi.os "darwin" }}
+# ========================================================
+# = Homebrew (macOS)
+# ========================================================
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
+# ========================================================
+# = JetBrains Toolbox
+# ========================================================
+export PATH="${PATH}:${HOME}/Library/Application Support/JetBrains/Toolbox/scripts"
+
+# ========================================================
+# = Locale
+# ========================================================
+export LC_ALL=en_US.UTF-8
+
+# ========================================================
+# = Build parallelization
+# ========================================================
+export JOBMAX=$(sysctl -n hw.logicalcpu)
+{{- else }}
+# ========================================================
+# = Homebrew (Linux / WSL)
+# ========================================================
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+
+# ========================================================
+# = Build parallelization
+# ========================================================
+export JOBMAX=$(nproc)
+{{- end }}
+export MAKEFLAGS="-j$JOBMAX"
+
+# ========================================================
+# = Machine-local overrides (untracked)
+# ========================================================
+[ -f ~/.zprofile.local ] && source ~/.zprofile.local
