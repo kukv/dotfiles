@@ -1,0 +1,10 @@
+{{- $name := promptStringOnce . "git_name" "Git user.name" -}}
+{{- $email := promptStringOnce . "git_email" "Git user.email" -}}
+{{- $signingKey := "" -}}
+{{- if eq .chezmoi.os "darwin" -}}
+{{-   $signingKey = promptStringOnce . "git_signing_key" "Git signing SSH public key (1Password)" -}}
+{{- end -}}
+[data]
+    git_name = {{ $name | quote }}
+    git_email = {{ $email | quote }}
+    git_signing_key = {{ $signingKey | quote }}
