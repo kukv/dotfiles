@@ -47,6 +47,10 @@ jobs:
           grep -q 'k3d = "latest"' "$DEST/.config/mise/config.toml"
           test -f "$DEST/.zshrc.local"
           test -f "$DEST/.config/nvim/init.lua"
+          # alien theme git submodules must be fetched (archive tarballs omit them)
+          test -f "$DEST/.oh-my-zsh/custom/themes/alien/libs/promptlib/activate"
+          test -f "$DEST/.oh-my-zsh/custom/themes/alien/libs/zsh-async/async.zsh"
+          test -f "$DEST/.oh-my-zsh/custom/themes/alien/libs/zsh-256color/zsh-256color.plugin.zsh"
 
       - name: Assert Linux-specific content
         if: runner.os == 'Linux'

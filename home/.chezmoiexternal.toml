@@ -7,10 +7,15 @@
     stripComponents = 1
     refreshPeriod = "168h"
 
+# alien は libs/ に git submodule (promptlib / zsh-async / zsh-256color) を持つ。
+# archive tarball は submodule を含まないためテーマが壊れる。git-repo + --recurse-submodules で取得する。
 [".oh-my-zsh/custom/themes/alien"]
-    type = "archive"
-    url = "https://github.com/eendroroy/alien/archive/refs/tags/2.1.2.tar.gz"
-    stripComponents = 1
+    type = "git-repo"
+    url = "https://github.com/eendroroy/alien.git"
+    refreshPeriod = "168h"
+    # renovate: depName=eendroroy/alien
+    clone.args = ["--branch", "2.1.2", "--depth", "1", "--recurse-submodules", "--shallow-submodules"]
+    pull.args = ["--ff-only"]
 
 [".oh-my-zsh/custom/plugins/zsh-syntax-highlighting"]
     type = "archive"
