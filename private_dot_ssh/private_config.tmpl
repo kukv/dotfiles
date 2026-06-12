@@ -1,0 +1,60 @@
+# Managed by chezmoi — edit with: chezmoi edit ~/.ssh/config
+
+Include ~/.ssh/1Password/config
+
+Host github
+  HostName github.com
+  Port 22
+  User git
+
+Host br-gateway1
+  HostName gateway1.cluster-internal.bright-room.net
+  Port 22
+  User bradmin
+
+Host br-gateway1-wan
+  HostName 192.168.2.50
+  Port 22
+  User bradmin
+
+Host br-node1
+  HostName 172.22.10.10
+  Port 22
+  User bradmin
+  ProxyJump br-gateway1
+
+Host br-node2
+  HostName 172.22.10.11
+  Port 22
+  User bradmin
+  ProxyJump br-gateway1
+
+Host br-node3
+  HostName 172.22.10.12
+  Port 22
+  User bradmin
+  ProxyJump br-gateway1
+
+Host br-node4
+  HostName 172.22.10.13
+  Port 22
+  User bradmin
+  ProxyJump br-gateway1
+
+Host br-node5
+  HostName 172.22.10.14
+  Port 22
+  User bradmin
+  ProxyJump br-gateway1
+
+Host br-node6
+  HostName 172.22.10.15
+  Port 22
+  User bradmin
+  ProxyJump br-gateway1
+
+Host br-external1
+  HostName 172.22.10.50
+  Port 22
+  User bradmin
+  ProxyJump br-gateway1
