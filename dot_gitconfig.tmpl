@@ -1,0 +1,21 @@
+# Managed by chezmoi — edit with: chezmoi edit ~/.gitconfig
+[user]
+    name = {{ .git_name }}
+    email = {{ .git_email }}
+{{- if eq .chezmoi.os "darwin" }}
+    signingkey = {{ .git_signing_key }}
+{{- end }}
+[core]
+    quotepath = false
+[ghq]
+    root = {{ .chezmoi.homeDir }}/dev/ghq
+[color]
+    ui = auto
+{{- if eq .chezmoi.os "darwin" }}
+[gpg]
+    format = ssh
+[gpg "ssh"]
+    program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
+[commit]
+    gpgsign = true
+{{- end }}
