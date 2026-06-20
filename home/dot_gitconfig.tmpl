@@ -2,20 +2,25 @@
 [user]
     name = {{ .git_name }}
     email = {{ .git_email }}
-{{- if eq .chezmoi.os "darwin" }}
     signingkey = {{ .git_signing_key }}
-{{- end }}
 [core]
     quotepath = false
+{{- if ne .chezmoi.os "darwin" }}
+    # WSL: route git's ssh through the Windows host (1Password lives on the Windows side)
+    sshCommand = ssh.exe
+{{- end }}
 [ghq]
     root = {{ .chezmoi.homeDir }}/dev/ghq
 [color]
     ui = auto
-{{- if eq .chezmoi.os "darwin" }}
 [gpg]
     format = ssh
 [gpg "ssh"]
+{{- if eq .chezmoi.os "darwin" }}
     program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
+{{- else }}
+    # WSL: resolved via the Windows PATH (WSL interop), same mechanism as ssh.exe above
+    program = op-ssh-sign-wsl.exe
+{{- end }}
 [commit]
     gpgsign = true
-{{- end }}
