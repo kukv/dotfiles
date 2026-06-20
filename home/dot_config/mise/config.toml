@@ -53,6 +53,13 @@ helm = "latest"
 helmfile = "latest"
 k3d = "latest"
 cmctl = "latest"
+argo = "latest"
+k9s = "latest"
+kustomize = "latest"
+kubeconform = "latest"
+conftest = "latest"
+flux2 = "latest"
+stern = "latest"
 
 # [tools.vcs]
 github-cli = "latest"
@@ -75,8 +82,24 @@ jq = "latest"
 yq = "latest"
 "pipx:yamllint" = "latest"
 
+# [tools.ansible]
+"pipx:ansible-lint" = "latest"
+
+# [tools.rust]
+rust = "latest"
+"ubi:crate-ci/cargo-release" = "latest"
+
+# [tools.ai]
+"npm:@openai/codex" = "latest"
+"npm:@drawio/mcp" = "latest"
+
+# [tools.testing]
+"npm:playwright" = "latest"
+
 # [tools.hashicorp]
 terraform = "latest"
+opentofu = "latest"
+packer = "latest"
 
 # [tools.network]
 cloudflared = "latest"
