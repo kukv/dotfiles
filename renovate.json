@@ -10,7 +10,6 @@
   "prConcurrentLimit": 0,
   "prHourlyLimit": 0,
   "separateMinorPatch": true,
-  "automerge": false,
   "minimumReleaseAge": "7 days",
   "automerge": true,
   "major": {
@@ -20,7 +19,9 @@
   "customManagers": [
     {
       "customType": "regex",
-      "fileMatch": ["^home/\\.chezmoiexternal\\.toml$"],
+      "managerFilePatterns": [
+        "/^home/\\.chezmoiexternal\\.toml$/"
+      ],
       "matchStrings": [
         "https://github\\.com/(?<depName>[^/]+/[^/]+)/archive/refs/tags/(?<currentValue>[^.]+(?:\\.[^.]+)*)\\.tar\\.gz",
         "# renovate: depName=(?<depName>\\S+)\\s+clone\\.args = \\[\"--branch\", \"(?<currentValue>[^\"]+)\""
