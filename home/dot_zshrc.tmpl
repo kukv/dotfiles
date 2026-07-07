@@ -103,11 +103,11 @@ alias v='nvim'
 {{- if eq .chezmoi.os "darwin" }}
 # provision this machine now (kukv/os-setup launchd wrapper; ~/.local/bin is on PATH)
 alias update_os='os-setup-pull.sh'
-{{- else }}
+{{- else if eq .chezmoi.os "linux" }}
 # provision this machine now (kukv/os-setup systemd service; root-owned unit)
 alias update_os='sudo systemctl start os-setup.service'
 {{- end }}
-{{- if ne .chezmoi.os "darwin" }}
+{{- if eq .chezmoi.os "linux" }}
 
 # WSL: route ssh through Windows host (1Password lives on the Windows side)
 alias ssh='ssh.exe'
