@@ -85,6 +85,7 @@ neovim = "latest"
 peco = "latest"
 # ssh extra + psycopg2-binary(PostgreSQL) / PyMySQL(MySQL) ドライバを注入
 "pipx:sqlit-tui" = { version = "latest", extras = "ssh", uvx_args = "--with psycopg2-binary --with PyMySQL" }
+"npm:backlog.md" = "latest"
 
 # [tools.json]
 jq = "latest"
