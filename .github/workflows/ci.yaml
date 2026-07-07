@@ -25,7 +25,7 @@ jobs:
           [data]
               git_name = "CI User"
               git_email = "ci@example.com"
-              git_signing_key = "ssh-ed25519 AAAATESTKEY"
+              use_1password = true
           EOF
 
       - name: chezmoi apply to throwaway destination
@@ -60,6 +60,31 @@ jobs:
           if grep -q 'op-ssh-sign-wsl.exe' "$DEST/.gitconfig"; then echo 'WSL signer leaked into native Linux gitconfig' >&2; exit 1; fi
           if grep -q 'MacOS/op-ssh-sign' "$DEST/.gitconfig"; then echo 'macOS signer leaked into Linux gitconfig' >&2; exit 1; fi
           test ! -f "$DEST/.ssh/config"
+
+      - name: chezmoi apply — local-key (no 1Password) variant
+        if: runner.os == 'Linux'
+        run: |
+          # Exercise the use_1password=false branch: local signing key instead of
+          # 1Password. apply-success gates the new template paths (signingkey-as-file,
+          # allowedSignersFile, and allowed_signers generation via stat/output). The
+          # two greps only cover what apply cannot: that the 1Password signer does not
+          # leak in, and that allowed_signers is actually generated from the key.
+          mkdir -p "$HOME/.ssh"
+          ssh-keygen -t ed25519 -f "$HOME/.ssh/id_ed25519" -N "" -q
+          cat > "$HOME/.config/chezmoi/chezmoi.toml" <<EOF
+          [data]
+              git_name = "CI User"
+              git_email = "ci@example.com"
+              use_1password = false
+              git_signing_key_file = "$HOME/.ssh/id_ed25519.pub"
+          EOF
+          DEST2="$(mktemp -d)"
+          "$HOME/.local/bin/chezmoi" apply \
+            --source "$GITHUB_WORKSPACE" \
+            --destination "$DEST2" \
+            --no-tty --verbose
+          if grep -q 'op-ssh-sign' "$DEST2/.gitconfig"; then echo '1Password signer leaked into local-key gitconfig' >&2; exit 1; fi
+          grep -q 'ci@example.com ssh-ed25519' "$DEST2/.ssh/allowed_signers"
 
       - name: Assert macOS signer + ssh routing
         if: runner.os == 'macOS'

@@ -1,8 +1,10 @@
 {{- $name := promptStringOnce . "git_name" "Git user.name" -}}
 {{- $email := promptStringOnce . "git_email" "Git user.email" -}}
-{{- /* signing key is needed on both macOS and WSL/Linux (1Password commit signing) */ -}}
-{{- $signingKey := promptStringOnce . "git_signing_key" "Git signing SSH public key (1Password)" -}}
+{{- $use1Password := promptBoolOnce . "use_1password" "Use 1Password for SSH auth and signing? (no on machines with a local signing key)" true -}}
 [data]
     git_name = {{ $name | quote }}
     git_email = {{ $email | quote }}
-    git_signing_key = {{ $signingKey | quote }}
+    use_1password = {{ $use1Password }}
+{{- if not $use1Password }}
+    git_signing_key_file = {{ promptStringOnce . "git_signing_key_file" "Path to local signing public key" (printf "%s/.ssh/id_ed25519.pub" .chezmoi.homeDir) | quote }}
+{{- end }}
