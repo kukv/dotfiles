@@ -48,7 +48,11 @@
       }
     }
   },
+  "language": "Japanese",
   "effortLevel": "high",
+  "tui": "fullscreen",
   "skipWorkflowUsageWarning": true,
+  "theme": "dark",
+  "editorMode": "normal",
   "agentPushNotifEnabled": true
 }
