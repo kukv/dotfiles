@@ -4,12 +4,21 @@
 # ==========================================================================
 [settings]
 experimental = true
+# .node-version 等の言語固有バージョンファイルを読まない (mise.toml で一元管理)
+idiomatic_version_file_enable_tools = []
 
 [settings.npm]
 package_manager = "pnpm"
 
 [settings.pipx]
 uvx = true
+
+# ==========================================================================
+# env
+# ==========================================================================
+[env]
+# Ruby をソースからビルドせずプリコンパイル済みバイナリを使う
+MISE_RUBY_COMPILE = "0"
 
 # ==========================================================================
 # packages
@@ -68,12 +77,14 @@ action-validator = "latest"
 actionlint = "latest"
 jj = "latest"
 "npm:difit" = "latest"
+"npm:hunkdiff" = "latest"
 
 # [tools.shells]
 shellcheck = "latest"
 neovim = "latest"
 peco = "latest"
-"pipx:sqlit-tui" = "latest"
+# ssh extra + psycopg2-binary(PostgreSQL) / PyMySQL(MySQL) ドライバを注入
+"pipx:sqlit-tui" = { version = "latest", extras = "ssh", uvx_args = "--with psycopg2-binary --with PyMySQL" }
 
 # [tools.json]
 jq = "latest"
@@ -90,6 +101,7 @@ rust = "latest"
 "ubi:crate-ci/cargo-release" = "latest"
 
 # [tools.ai]
+herdr = "latest"
 "npm:@openai/codex" = "latest"
 "npm:@drawio/mcp" = "latest"
 
