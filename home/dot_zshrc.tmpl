@@ -107,7 +107,7 @@ alias update_os='os-setup-pull.sh'
 # provision this machine now (kukv/os-setup systemd service; root-owned unit)
 alias update_os='sudo systemctl start os-setup.service'
 {{- end }}
-{{- if (.chezmoi.kernel.osrelease | default "" | lower | contains "microsoft") }}
+{{- if (index .chezmoi.kernel "osrelease" | default "" | lower | contains "microsoft") }}
 
 # WSL only: route ssh through the Windows host (1Password lives on the Windows side).
 # Detect via the kernel string — .chezmoi.os is "linux" on native Linux too.
