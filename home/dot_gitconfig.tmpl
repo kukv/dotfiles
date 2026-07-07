@@ -5,8 +5,9 @@
     signingkey = {{ .git_signing_key }}
 [core]
     quotepath = false
-{{- if ne .chezmoi.os "darwin" }}
-    # WSL: route git's ssh through the Windows host (1Password lives on the Windows side)
+{{- if (.chezmoi.kernel.osrelease | default "" | lower | contains "microsoft") }}
+    # WSL only: route git's ssh through the Windows host (1Password lives on the Windows side).
+    # Detect via the kernel string — .chezmoi.os is "linux" on native Linux too.
     sshCommand = ssh.exe
 {{- end }}
 [ghq]
@@ -18,7 +19,7 @@
 [gpg "ssh"]
 {{- if eq .chezmoi.os "darwin" }}
     program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
-{{- else }}
+{{- else if (.chezmoi.kernel.osrelease | default "" | lower | contains "microsoft") }}
     # WSL: resolved via the Windows PATH (WSL interop), same mechanism as ssh.exe above
     program = op-ssh-sign-wsl.exe
 {{- end }}

@@ -49,12 +49,15 @@ jobs:
           grep -q 'name = CI User' "$DEST/.gitconfig"
           test -f "$DEST/.oh-my-zsh/custom/themes/alien/libs/promptlib/activate"
 
-      - name: Assert Linux signer + ssh routing
+      - name: Assert native Linux ssh routing (no WSL, no macOS)
         if: runner.os == 'Linux'
         run: |
-          grep -q "alias ssh='ssh.exe'" "$DEST/.zshrc"
-          # WSL signs commits via the Windows-side 1Password wrapper
-          grep -q 'op-ssh-sign-wsl.exe' "$DEST/.gitconfig"
+          # ubuntu-latest is native Linux, not WSL. WSL-only routing is gated on the
+          # kernel string (…microsoft…), so it must be ABSENT here. GitHub has no WSL
+          # runner, so "WSL routing present" is intentionally NOT covered by CI.
+          if grep -q "alias ssh='ssh.exe'" "$DEST/.zshrc"; then echo 'WSL ssh alias leaked into native Linux zshrc' >&2; exit 1; fi
+          if grep -q 'sshCommand = ssh.exe' "$DEST/.gitconfig"; then echo 'WSL sshCommand leaked into native Linux gitconfig' >&2; exit 1; fi
+          if grep -q 'op-ssh-sign-wsl.exe' "$DEST/.gitconfig"; then echo 'WSL signer leaked into native Linux gitconfig' >&2; exit 1; fi
           if grep -q 'MacOS/op-ssh-sign' "$DEST/.gitconfig"; then echo 'macOS signer leaked into Linux gitconfig' >&2; exit 1; fi
           test ! -f "$DEST/.ssh/config"
 
