@@ -6,5 +6,5 @@
     git_email = {{ $email | quote }}
     use_1password = {{ $use1Password }}
 {{- if not $use1Password }}
-    git_signing_key_file = {{ promptStringOnce . "git_signing_key_file" "Path to local signing public key" (printf "%s/.ssh/id_ed25519.pub" .chezmoi.homeDir) | quote }}
+    git_signing_key_file = {{ promptStringOnce . "git_signing_key_file" "Path to local signing public key" (printf "%s/.ssh/git_signing_key.pub" .chezmoi.homeDir) | quote }}
 {{- end }}

@@ -65,18 +65,19 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           # Exercise the use_1password=false branch: local signing key instead of
-          # 1Password. apply-success gates the new template paths (signingkey-as-file,
-          # allowedSignersFile, and allowed_signers generation via stat/output). The
-          # two greps only cover what apply cannot: that the 1Password signer does not
-          # leak in, and that allowed_signers is actually generated from the key.
+          # 1Password. The key lives at the template's default path
+          # (~/.ssh/git_signing_key.pub) and git_signing_key_file is left unset, so this
+          # also covers the default. apply-success gates the new template paths
+          # (signingkey-as-file, allowedSignersFile, allowed_signers via stat/output).
+          # The two greps only cover what apply cannot: that the 1Password signer does
+          # not leak in, and that allowed_signers is actually generated from the key.
           mkdir -p "$HOME/.ssh"
-          ssh-keygen -t ed25519 -f "$HOME/.ssh/id_ed25519" -N "" -q
+          ssh-keygen -t ed25519 -f "$HOME/.ssh/git_signing_key" -N "" -q
           cat > "$HOME/.config/chezmoi/chezmoi.toml" <<EOF
           [data]
               git_name = "CI User"
               git_email = "ci@example.com"
               use_1password = false
-              git_signing_key_file = "$HOME/.ssh/id_ed25519.pub"
           EOF
           DEST2="$(mktemp -d)"
           "$HOME/.local/bin/chezmoi" apply \

@@ -3,7 +3,7 @@
        use_1password may be injected by os-setup; default to 1Password when absent. */ -}}
 {{- $op := true -}}
 {{- if hasKey . "use_1password" }}{{ $op = .use_1password }}{{ end -}}
-{{- $keyFile := index . "git_signing_key_file" | default (printf "%s/.ssh/id_ed25519.pub" .chezmoi.homeDir) -}}
+{{- $keyFile := index . "git_signing_key_file" | default (printf "%s/.ssh/git_signing_key.pub" .chezmoi.homeDir) -}}
 {{- if not $op -}}
 {{- if stat $keyFile -}}
 {{ .git_email }} {{ output "cat" $keyFile | trim }}

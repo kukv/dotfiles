@@ -10,7 +10,7 @@
     # 1Password resolves the key from the agent (single vault), so no key is pinned here.
     signingkey =
 {{- else }}
-    signingkey = {{ index . "git_signing_key_file" | default (printf "%s/.ssh/id_ed25519.pub" .chezmoi.homeDir) }}
+    signingkey = {{ index . "git_signing_key_file" | default (printf "%s/.ssh/git_signing_key.pub" .chezmoi.homeDir) }}
 {{- end }}
 [core]
     quotepath = false
