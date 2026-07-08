@@ -1,21 +1,8 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended",
-    "helpers:pinGitHubActionDigests"
+    "github>bright-room/renovate-config"
   ],
-  "timezone": "Asia/Tokyo",
-  "schedule": ["before 9am on saturday"],
-  "labels": ["Kind: Dependencies"],
-  "prConcurrentLimit": 0,
-  "prHourlyLimit": 0,
-  "separateMinorPatch": true,
-  "minimumReleaseAge": "7 days",
-  "automerge": true,
-  "major": {
-    "minimumReleaseAge": "14 days",
-    "automerge": false
-  },
   "customManagers": [
     {
       "customType": "regex",
