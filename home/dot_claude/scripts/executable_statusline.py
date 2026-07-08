@@ -7,7 +7,6 @@ if sys.platform == 'win32':
 
 data = json.load(sys.stdin)
 
-BLOCKS = ' ▏▎▍▌▋▊▉█'
 R = '\033[0m'
 DIM = '\033[2m'
 C_MODEL = '\033[38;2;97;175;239m'    # blue
@@ -24,14 +23,8 @@ def gradient(pct):
 
 def bar(pct, width=26):
     pct = min(max(pct, 0), 100)
-    filled = pct * width / 100
-    full = int(filled)
-    frac = int((filled - full) * 8)
-    b = '█' * full
-    if full < width and frac > 0:
-        b += BLOCKS[frac]
-        full += 1
-    return b + '░' * (width - full)
+    full = round(pct * width / 100)
+    return '█' * full + '░' * (width - full)
 
 def fmt_num(n):
     if n >= 1_000_000:
