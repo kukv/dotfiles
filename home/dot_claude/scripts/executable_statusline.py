@@ -10,6 +10,10 @@ data = json.load(sys.stdin)
 BLOCKS = ' ▏▎▍▌▋▊▉█'
 R = '\033[0m'
 DIM = '\033[2m'
+C_MODEL = '\033[38;2;97;175;239m'    # blue
+C_EFFORT = '\033[38;2;198;120;221m'  # purple
+C_REPO = '\033[38;2;152;195;121m'    # green
+C_BRANCH = '\033[38;2;229;192;123m'  # yellow
 
 def gradient(pct):
     if pct < 50:
@@ -54,10 +58,11 @@ def bar_row(label, pct, trailing=''):
 cw = data.get('context_window') or {}
 size = cw.get('context_window_size')
 
-model = data.get('model', {}).get('display_name', 'Claude')
+name = data.get('model', {}).get('display_name', 'Claude')
+model = f'{C_MODEL}{name}{R}'
 effort = (data.get('effort') or {}).get('level')
 if effort:
-    model += f'[{effort}]'
+    model += f'{C_EFFORT}[{effort}]{R}'
 
 used = (cw.get('total_input_tokens') or 0) + (cw.get('total_output_tokens') or 0)
 token_seg = f'{fmt_num(used)}/{fmt_num(size)}' if size else fmt_num(used)
@@ -74,7 +79,9 @@ try:
     ).stdout.strip()
 except Exception:
     branch = ''
-repo_seg = f'{repo}({branch})' if branch else repo
+repo_seg = f'{C_REPO}{repo}{R}'
+if branch:
+    repo_seg += f'({C_BRANCH}{branch}{R})'
 
 sep = f' {DIM}│{R} '
 lines = [sep.join([model, token_seg, repo_seg])]
