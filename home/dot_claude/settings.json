@@ -9,17 +9,31 @@
     "defaultMode": "auto"
   },
   "model": "opus[1m]",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/home/tech/.claude/hooks/herdr-agent-state.sh' session",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
   "statusLine": {
     "type": "command",
     "command": "~/.claude/scripts/statusline.py"
   },
   "enabledPlugins": {
-    "skill-creator@claude-plugins-official": true,
-    "example-skills@anthropic-agent-skills": true,
+    "codex@openai-codex": true,
     "document-skills@anthropic-agent-skills": true,
+    "example-skills@anthropic-agent-skills": true,
     "feature-dev@claude-plugins-official": true,
-    "superpowers@superpowers-marketplace": true,
-    "codex@openai-codex": true
+    "skill-creator@claude-plugins-official": true,
+    "superpowers@superpowers-marketplace": true
   },
   "extraKnownMarketplaces": {
     "anthropic-agent-skills": {
@@ -35,21 +49,21 @@
       },
       "autoUpdate": true
     },
-    "superpowers-marketplace": {
-      "source": {
-        "source": "github",
-        "repo": "obra/superpowers-marketplace"
-      }
-    },
     "openai-codex": {
       "source": {
         "source": "github",
         "repo": "openai/codex-plugin-cc"
       }
+    },
+    "superpowers-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "obra/superpowers-marketplace"
+      }
     }
   },
   "language": "Japanese",
-  "effortLevel": "high",
+  "effortLevel": "xhigh",
   "tui": "fullscreen",
   "skipWorkflowUsageWarning": true,
   "theme": "dark",
