@@ -4,22 +4,78 @@
   },
   "permissions": {
     "deny": [
-      "Bash(op *)"
+      "Bash(op *)",
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/.envrc)",
+      "Read(**/secrets/**)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/id_rsa)",
+      "Read(**/id_ed25519)",
+      "Read(**/.ssh/**)",
+      "Read(**/.aws/credentials)",
+      "Read(**/*credentials*.json)",
+      "Read(**/.netrc)",
+      "Read(**/*.p12)",
+      "Read(**/*.pfx)",
+      "Edit(**/.env)",
+      "Edit(**/.env.*)",
+      "Edit(**/.envrc)",
+      "Edit(**/secrets/**)",
+      "Edit(**/*.pem)",
+      "Edit(**/*.key)",
+      "Edit(**/id_rsa)",
+      "Edit(**/id_ed25519)",
+      "Edit(**/.ssh/**)",
+      "Edit(**/.aws/credentials)",
+      "Edit(**/*credentials*.json)",
+      "Edit(**/.netrc)",
+      "Edit(**/*.p12)",
+      "Edit(**/*.pfx)",
+      "Write(**/.env)",
+      "Write(**/.env.*)",
+      "Write(**/.envrc)",
+      "Write(**/secrets/**)",
+      "Write(**/*.pem)",
+      "Write(**/*.key)",
+      "Write(**/id_rsa)",
+      "Write(**/id_ed25519)",
+      "Write(**/.ssh/**)",
+      "Write(**/.aws/credentials)",
+      "Write(**/*credentials*.json)",
+      "Write(**/.netrc)",
+      "Write(**/*.p12)",
+      "Write(**/*.pfx)"
     ],
     "defaultMode": "auto"
   },
   "model": "opus[1m]",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/home/tech/.claude/hooks/herdr-agent-state.sh' session",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
   "statusLine": {
     "type": "command",
     "command": "~/.claude/scripts/statusline.py"
   },
   "enabledPlugins": {
-    "skill-creator@claude-plugins-official": true,
-    "example-skills@anthropic-agent-skills": true,
+    "codex@openai-codex": true,
     "document-skills@anthropic-agent-skills": true,
+    "example-skills@anthropic-agent-skills": true,
     "feature-dev@claude-plugins-official": true,
-    "superpowers@superpowers-marketplace": true,
-    "codex@openai-codex": true
+    "skill-creator@claude-plugins-official": true,
+    "superpowers@superpowers-marketplace": true
   },
   "extraKnownMarketplaces": {
     "anthropic-agent-skills": {
@@ -35,21 +91,21 @@
       },
       "autoUpdate": true
     },
-    "superpowers-marketplace": {
-      "source": {
-        "source": "github",
-        "repo": "obra/superpowers-marketplace"
-      }
-    },
     "openai-codex": {
       "source": {
         "source": "github",
         "repo": "openai/codex-plugin-cc"
       }
+    },
+    "superpowers-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "obra/superpowers-marketplace"
+      }
     }
   },
   "language": "Japanese",
-  "effortLevel": "high",
+  "effortLevel": "xhigh",
   "tui": "fullscreen",
   "skipWorkflowUsageWarning": true,
   "theme": "dark",
