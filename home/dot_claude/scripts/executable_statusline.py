@@ -28,10 +28,10 @@ def bar(pct, width=26):
     full = int(filled)
     frac = int((filled - full) * 8)
     b = '█' * full
-    if full < width:
+    if full < width and frac > 0:
         b += BLOCKS[frac]
-        b += '░' * (width - full - 1)
-    return b
+        full += 1
+    return b + '░' * (width - full)
 
 def fmt_num(n):
     if n >= 1_000_000:
