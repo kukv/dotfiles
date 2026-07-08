@@ -1,51 +1,47 @@
 ---
 name: hunk-review
-description: Interacts with live Hunk diff review sessions via CLI. Inspects review focus, navigates files and hunks, reloads session contents, and adds inline review comments. Use when the user has a Hunk session running or wants to review diffs interactively.
+description: Hunk のライブ diff レビューセッションを CLI 経由で操作する。レビュー対象の確認、ファイル/ハンクの移動、セッション内容の再読み込み、インラインコメントの追加を行う。ユーザーが Hunk セッションを起動している、または対話的に diff をレビューしたいときに使う。
 ---
 
-# Hunk Review (loader)
+# Hunk Review（ローダー）
 
-This is a thin loader for the real Hunk review skill bundled with the installed
-`hunk` binary. Because `hunk` is installed via mise, the bundled skill path
-changes on every version upgrade — so resolve it at runtime instead of pinning
-a path.
+これは、インストール済みの `hunk` バイナリに同梱された本体の Hunk レビュースキルを
+読み込むための薄いローダーである。`hunk` は mise 経由で導入しているため、同梱スキルの
+パスはバージョンアップのたびに変わる。よってパスを固定せず、実行時に解決する。
 
-## Steps
+## 手順
 
-1. Run `hunk skill path` to print the absolute path of the bundled skill file.
-2. Read that file with the Read tool.
-3. Follow its instructions to carry out the user's request, subject to the
-   local policy below.
+1. `hunk skill path` を実行し、同梱スキルファイルの絶対パスを取得する。
+2. そのファイルを Read ツールで読む。
+3. 以下のローカルポリシーに従いつつ、その指示に沿ってユーザーの依頼を遂行する。
 
-If `hunk skill path` fails (e.g. `hunk` is not installed), tell the user and
-suggest installing it via mise (`mise install`), then stop.
+`hunk skill path` が失敗した場合（例: `hunk` が未インストール）は、その旨をユーザーに伝え、
+mise での導入（`mise install`）を促して停止する。
 
-## Local policy
+## ローカルポリシー
 
-These rules sit on top of the bundled skill and take precedence for this setup
-(herdr split panes: Claude Code in one pane, Hunk in another, often several
-worktree tabs open at once). Keep exact command syntax deferred to the bundled
-skill; the rules below only constrain how you select and drive a session.
+これらのルールは同梱スキルの上に重なり、この構成（herdr の分割ペイン: 片方が Claude Code、
+もう片方が Hunk。多くの場合、複数の worktree タブを同時に開く）では優先される。正確な
+コマンド構文は同梱スキルに委ね、以下のルールはセッションの選択と操作方針だけを縛る。
 
-### Session selection (multi-tab safety)
+### セッション選択（複数タブでの安全性）
 
-Never hijack a sibling tab's Hunk window. Pin the session for THIS worktree:
+他タブの Hunk ウィンドウを絶対に乗っ取らない。この worktree のセッションを固定すること:
 
-- Select every `hunk session` command with `--repo "$(git rev-parse --show-toplevel)"`
-  (never a bare command, never `--repo .`).
-- If several sessions share that repo root, run `hunk session list --json`,
-  pick the `sessionId` whose `repoRoot` matches (disambiguate by
-  `terminal.locations[].tty`), and pass `<session-id>` on every command.
-- Never rely on auto-resolve when more than one session is live.
+- すべての `hunk session` コマンドを `--repo "$(git rev-parse --show-toplevel)"` で選択する
+  （素のコマンド不可、`--repo .` 不可）。
+- 同じ repo root を複数のセッションが共有している場合は、`hunk session list --json` を実行し、
+  `repoRoot` が一致する `sessionId` を選ぶ（`terminal.locations[].tty` で判別する）。以降の
+  全コマンドで `<session-id>` を渡す。
+- ライブセッションが複数あるときに auto-resolve に頼らない。
 
-### Showing changes on request
+### 依頼に応じた変更の表示
 
-The user launches Hunk themselves in the split pane (e.g. `hunk show --watch`),
-then asks you to make changes viewable. Do NOT launch Hunk yourself — reload
-their live session with the bundled skill's `reload` command, selecting it with
-the worktree `--repo` above:
+ユーザーは分割ペインで自分で Hunk を起動し（例: `hunk show --watch`）、その後に変更を
+見られるようにするよう依頼する。自分で Hunk を起動しないこと。代わりに、上記の worktree
+`--repo` で選択したうえで、同梱スキルの `reload` コマンドでライブセッションを再読み込みする:
 
-- Working-tree changes: reload with `-- diff`
-- A commit or range: reload with `-- show <ref>` / `-- diff <range>`
+- 作業ツリーの変更: `-- diff` で reload
+- 特定のコミットや範囲: `-- show <ref>` / `-- diff <range>` で reload
 
-Then navigate to the first hunk worth their attention.
+その後、最初に注目すべきハンクへ navigate する。
