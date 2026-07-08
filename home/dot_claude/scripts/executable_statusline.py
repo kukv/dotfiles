@@ -18,7 +18,7 @@ def gradient(pct):
     g = int(200 - (pct - 50) * 4)
     return f'\033[38;2;255;{max(g,0)};60m'
 
-def bar(pct, width=10):
+def bar(pct, width=26):
     pct = min(max(pct, 0), 100)
     filled = pct * width / 100
     full = int(filled)
@@ -47,7 +47,7 @@ def rem_time(resets_at, with_days):
     return f'{rem // 3600}h {mins:02d}m'
 
 def bar_row(label, pct, trailing=''):
-    line = f'{label:<3} [{gradient(pct)}{bar(pct)}{R}] {round(pct):>3}%'
+    line = f'{label:<3}: {gradient(pct)}{bar(pct)}{R} {round(pct):>3}%'
     return f'{line} {trailing}' if trailing else line
 
 # --- header ---
@@ -55,8 +55,6 @@ cw = data.get('context_window') or {}
 size = cw.get('context_window_size')
 
 model = data.get('model', {}).get('display_name', 'Claude')
-if size and size >= 1_000_000:
-    model += '(1M)'
 effort = (data.get('effort') or {}).get('level')
 if effort:
     model += f'[{effort}]'
