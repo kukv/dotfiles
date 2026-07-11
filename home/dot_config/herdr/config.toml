@@ -6,3 +6,7 @@ agent_panel_sort = "spaces"
 [experimental]
 switch_ascii_input_source_in_prefix = true
 
+[[keys.command]]
+key = "prefix+alt+g"
+type = "plugin_action"
+command = "kukv.github-dash.open"
