@@ -72,6 +72,7 @@ stern = "latest"
 
 # [tools.vcs]
 github-cli = "latest"
+lazygit = "latest"
 act = "latest"
 action-validator = "latest"
 actionlint = "latest"
