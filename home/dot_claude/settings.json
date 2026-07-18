@@ -32,21 +32,7 @@
       "Edit(**/*credentials*.json)",
       "Edit(**/.netrc)",
       "Edit(**/*.p12)",
-      "Edit(**/*.pfx)",
-      "Write(**/.env)",
-      "Write(**/.env.*)",
-      "Write(**/.envrc)",
-      "Write(**/secrets/**)",
-      "Write(**/*.pem)",
-      "Write(**/*.key)",
-      "Write(**/id_rsa)",
-      "Write(**/id_ed25519)",
-      "Write(**/.ssh/**)",
-      "Write(**/.aws/credentials)",
-      "Write(**/*credentials*.json)",
-      "Write(**/.netrc)",
-      "Write(**/*.p12)",
-      "Write(**/*.pfx)"
+      "Edit(**/*.pfx)"
     ],
     "defaultMode": "auto"
   },
