@@ -36,7 +36,7 @@
     ],
     "defaultMode": "auto"
   },
-  "model": "opus[1m]",
+  "model": "claude-fable-5[1m]",
   "hooks": {
     "SessionStart": [
       {
@@ -61,7 +61,8 @@
     "example-skills@anthropic-agent-skills": true,
     "feature-dev@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": true,
-    "superpowers@superpowers-marketplace": true
+    "superpowers@superpowers-marketplace": true,
+    "ruby-lsp@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "anthropic-agent-skills": {
@@ -91,7 +92,7 @@
     }
   },
   "language": "Japanese",
-  "effortLevel": "xhigh",
+  "effortLevel": "high",
   "tui": "fullscreen",
   "skipWorkflowUsageWarning": true,
   "theme": "dark",
