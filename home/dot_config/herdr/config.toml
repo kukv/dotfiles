@@ -22,13 +22,12 @@ switch_ascii_input_source_in_prefix = true
 # shift+g は new_worktree で使用済みのため github-dash のみ ctrl+g。prefix+f は空きキーなのでそのまま。
 # shell コマンドはフォーカス中ペインの cwd で実行され、HERDR_ACTIVE_* 環境変数を受け取る。
 
-# herdr-file-viewer: prefix+f で popup 起動
-# 既定 placement は split のため、plugin pane open で popup を明示する。
+# herdr-file-viewer: prefix+f で別タブ起動（既にタブがあればそこへ切り替え）
 [[keys.command]]
 key = "prefix+f"
-type = "shell"
-command = "herdr plugin pane open --plugin herdr-file-viewer --entrypoint file-viewer --placement popup --width 85% --height 85%"
-description = "Open file viewer in popup pane"
+type = "plugin_action"
+command = "herdr-file-viewer.open-file-viewer-tab"
+description = "Open file viewer in tab"
 
 # neovim: prefix+shift+e で現在のペインのディレクトリ（ワークツリー）を別タブで開く。
 # tab.create はコマンド指定不可のため、agent start（現タブに split）→ pane move --new-tab で別タブ化する。
