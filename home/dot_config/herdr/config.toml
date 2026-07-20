@@ -19,31 +19,31 @@ switch_ascii_input_source_in_prefix = true
 # --- キーバインド ---
 # アプリ・プラグイン起動系は prefix+shift+英字 に統一（prefix+英字 単体はデフォルトの
 # ペイン移動 h/j/k/l などと衝突しやすく、alt は iTerm2 の Option 設定に依存するため）。
-# shift+g は new_worktree で使用済みのため github-dash のみ ctrl+g。prefix+f は空きキーなのでそのまま。
-# shell コマンドはフォーカス中ペインの cwd で実行され、HERDR_ACTIVE_* 環境変数を受け取る。
+# shift+g は new_worktree で使用済みのため github-dash のみ ctrl+g。prefix+f は空きキーなので nvim に割当。
+# type = "pane" はフォーカス中ペインの cwd で一時ペインを開き、コマンド終了時に自動で閉じる。
+# 全画面にしたいときは zoom（prefix+z）を使う。
 
-# herdr-file-viewer: prefix+f で別タブ起動（既にタブがあればそこへ切り替え）
+# neovim: prefix+f で現在のペインのディレクトリ（ワークツリー）を split で開く。
+# 引数 "." がないと LazyVim はダッシュボードを表示するため、cwd をエクスプローラーで開く。
 [[keys.command]]
 key = "prefix+f"
+type = "pane"
+command = "nvim ."
+description = "Open neovim in current dir"
+
+# herdr-file-viewer: prefix+shift+e で別タブ起動（既にタブがあればそこへ切り替え）
+[[keys.command]]
+key = "prefix+shift+e"
 type = "plugin_action"
 command = "herdr-file-viewer.open-file-viewer-tab"
 description = "Open file viewer in tab"
 
-# neovim: prefix+shift+e で現在のペインのディレクトリ（ワークツリー）を別タブで開く。
-# tab.create はコマンド指定不可のため、agent start（現タブに split）→ pane move --new-tab で別タブ化する。
-# "$$" で起動ごとに一意な名前にする（agent 名は重複不可）。
-[[keys.command]]
-key = "prefix+shift+e"
-type = "shell"
-command = 'p=$(herdr agent start "nvim-$$" --cwd "$HERDR_ACTIVE_PANE_CWD" --no-focus -- nvim | jq -r .result.agent.pane_id) && herdr pane move "$p" --new-tab --label nvim --focus'
-description = "Open neovim in new tab"
-
-# sqlit: prefix+shift+s で別タブ起動（neovim と同じ方式）
+# sqlit: prefix+shift+s で一時ペイン起動
 [[keys.command]]
 key = "prefix+shift+s"
-type = "shell"
-command = 'p=$(herdr agent start "sqlit-$$" --cwd "$HERDR_ACTIVE_PANE_CWD" --no-focus -- sqlit | jq -r .result.agent.pane_id) && herdr pane move "$p" --new-tab --label sqlit --focus'
-description = "Open sqlit in new tab"
+type = "pane"
+command = "sqlit"
+description = "Open sqlit in current dir"
 
 # lazygit: prefix+shift+l で popup 起動
 [[keys.command]]
