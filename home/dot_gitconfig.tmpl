@@ -2,15 +2,20 @@
 {{- /* use_1password may be injected by os-setup; default to 1Password when absent (chezmoi runs missingkey=error) */ -}}
 {{- $op := true -}}
 {{- if hasKey . "use_1password" }}{{ $op = .use_1password }}{{ end -}}
+{{- $keyFile := index . "git_signing_key_file" | default (printf "%s/.ssh/git_signing_key.pub" .chezmoi.homeDir) -}}
 # Managed by chezmoi — edit with: chezmoi edit ~/.gitconfig
 [user]
     name = {{ .git_name }}
     email = {{ .git_email }}
-{{- if $op }}
-    # 1Password resolves the key from the agent (single vault), so no key is pinned here.
+{{- if and $isWSL $op }}
+    # WSL + 1Password: signing is delegated to the Windows host
+    # (op-ssh-sign-wsl.exe), so no local key is pinned here.
     signingkey =
 {{- else }}
-    signingkey = {{ index . "git_signing_key_file" | default (printf "%s/.ssh/git_signing_key.pub" .chezmoi.homeDir) }}
+    # git requires user.signingkey for SSH signing even when a signing program
+    # is configured, so pin the public-key file here (the signer resolves the
+    # matching private key).
+    signingkey = {{ $keyFile }}
 {{- end }}
 [core]
     quotepath = false
