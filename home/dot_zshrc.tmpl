@@ -43,11 +43,15 @@ export ALIEN_THEME="blue"
 export ALIEN_USE_NERD_FONT=1
 {{- end }}
 {{ if eq .chezmoi.os "darwin" }}
+{{- /* use_1password may be injected by os-setup; default to 1Password when absent (chezmoi runs missingkey=error) */ -}}
+{{- $op := true -}}
+{{- if hasKey . "use_1password" }}{{ $op = .use_1password }}{{ end -}}
+{{- if $op }}
 # ==========================================================================
 # = 1Password SSH agent (macOS)
 # ==========================================================================
 export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
-
+{{ end }}
 # ==========================================================================
 # = Docker completions (macOS)
 # ==========================================================================

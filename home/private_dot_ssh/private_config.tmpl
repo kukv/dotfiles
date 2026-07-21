@@ -1,6 +1,11 @@
 # Managed by chezmoi — edit with: chezmoi edit ~/.ssh/config
+{{- /* use_1password may be injected by os-setup; default to 1Password when absent (chezmoi runs missingkey=error) */ -}}
+{{- $op := true -}}
+{{- if hasKey . "use_1password" }}{{ $op = .use_1password }}{{ end -}}
+{{- if $op }}
 
 Include ~/.ssh/1Password/config
+{{- end }}
 
 Host github
   HostName github.com
