@@ -7,16 +7,11 @@
 [user]
     name = {{ .git_name }}
     email = {{ .git_email }}
-{{- if and $isWSL $op }}
-    # WSL + 1Password: signing is delegated to the Windows host
-    # (op-ssh-sign-wsl.exe), so no local key is pinned here.
-    signingkey =
-{{- else }}
     # git requires user.signingkey for SSH signing even when a signing program
     # is configured, so pin the public-key file here (the signer resolves the
-    # matching private key).
+    # matching private key). Override via chezmoi data git_signing_key_file
+    # (seeded from os-setup extra_vars: git.signing_key_file).
     signingkey = {{ $keyFile }}
-{{- end }}
 [core]
     quotepath = false
 {{- if $isWSL }}
