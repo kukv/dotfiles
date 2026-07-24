@@ -26,6 +26,10 @@
 {{- end }}
 [ghq]
     root = {{ .chezmoi.homeDir }}/dev/ghq
+[init]
+    # pre-commit hook を clone/init 時に自動配置する。テンプレートの中身は
+    # run_once_after_setup-git-template.sh が pre-commit init-templatedir で生成する
+    templateDir = {{ .chezmoi.homeDir }}/.git-template
 [color]
     ui = auto
 [gpg]
