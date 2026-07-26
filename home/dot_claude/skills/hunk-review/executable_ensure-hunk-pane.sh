@@ -64,7 +64,7 @@ esac
 
 # pane run は shell の入力バッファを消さずに追記するため、先に行をクリアする
 herdr pane send-keys "$right" ctrl+u >/dev/null 2>&1 || true
-herdr pane run "$right" 'hunk show --watch'
+herdr pane run "$right" 'hunk show --watch --mode stack --agent-notes'
 
 for _ in $(seq 1 60); do
   sid="$(pane_session "$right")"
