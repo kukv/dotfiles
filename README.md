@@ -28,7 +28,7 @@ dotfiles/
     ├── dot_gitconfig.tmpl        # → ~/.gitconfig
     ├── create_dot_zshrc.local    # → ~/.zshrc.local（初回のみ生成）
     ├── create_dot_zprofile.local # → ~/.zprofile.local（初回のみ生成）
-    ├── dot_config/{mise,nvim}/   # → ~/.config/mise, ~/.config/nvim
+    ├── dot_config/{mise,nvim,herdr}/ # → ~/.config/mise, ~/.config/nvim, ~/.config/herdr
     ├── private_dot_ssh/          # → ~/.ssh（macOS のみ）
     └── Library/                  # → ~/Library（macOS iTerm2 プロファイル）
 ```
@@ -82,5 +82,6 @@ chezmoi apply           # ~/ に反映
 - `~/.zshrc` / `~/.zprofile`（OS 分岐）/ `~/.gitconfig`
 - `~/.config/mise/config.toml`（ツールバージョン定義）
 - `~/.config/nvim`（LazyVim、ベンダリング）
+- `~/.config/herdr/config.toml`（ターミナルワークスペースのキーバインド定義）
 - Oh-My-Zsh + プラグイン / テーマ（chezmoi externals、固定 + renovate 追従）
 - macOS のみ: `~/.ssh/config`、iTerm2 の Dynamic Profile
