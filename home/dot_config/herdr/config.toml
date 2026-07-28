@@ -4,6 +4,10 @@ onboarding = false
 agent_panel_sort = "spaces"
 
 [experimental]
+# experimental graphics を有効化
+# herdr browserで利用
+kitty_graphics = true
+
 # TUI がカーソルを隠していても、IME が候補ウィンドウの位置を追えるように外側のターミナルへカーソル位置を公開する
 reveal_hidden_cursor_for_cjk_ime = true
 
