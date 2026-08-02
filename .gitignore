@@ -1,4 +1,3 @@
-# >>> repository-fanout managed >>>
 ### JetBrains IDEs ###
 .fleet/
 .idea/
@@ -39,4 +38,3 @@ tmp/*
 
 ### Misc ###
 HELP.md
-# <<< repository-fanout managed <<<
