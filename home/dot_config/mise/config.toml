@@ -102,7 +102,7 @@ yq = "latest"
 
 # [tools.rust]
 rust = "latest"
-"ubi:crate-ci/cargo-release" = "latest"
+"github:crate-ci/cargo-release" = "latest"
 
 # [tools.ai]
 herdr = "latest"
