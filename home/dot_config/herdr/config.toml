@@ -1,7 +1,25 @@
 onboarding = false
 
+[theme]
+name = "rose-pine"
+auto_switch = false
+
 [ui]
 agent_panel_sort = "spaces"
+status_indicators = "dots"
+show_agent_labels_on_pane_borders = true
+
+# エージェント行に状態テキスト（idle / done など）を表示する。
+# デフォルトの rows は state_icon（色付きドット）のみで state_text を含まない。
+[ui.sidebar.agents]
+rows = [["state_icon", "state_text", "agent"], ["workspace", "tab"], ["terminal_title_stripped"]]
+
+# アプリ内トーストではなく OS の通知センターに出す（別ウィンドウにいても気づける）
+[ui.toast]
+delivery = "system"
+
+[ui.sound]
+enabled = true
 
 [experimental]
 # experimental graphics を有効化
@@ -20,13 +38,37 @@ cjk_ime_cursor_shape = "steady_block"
 # prefix モードの間だけ macOS の入力ソースを ASCII 系に切り替え、抜けたら元の入力ソースに戻す
 switch_ascii_input_source_in_prefix = true
 
-# --- キーバインド ---
-# アプリ・プラグイン起動系は prefix+shift+英字 に統一（prefix+英字 単体はデフォルトの
+[keys]
+# 組み込みの new_tab は起点ペインの foreground_cwd を継承するため、claude -w が作った
+# worktree の中でタブが開いてしまう。無効化して、下の prefix+c に置き換える。
+new_tab = ""
+
+# 直前のペインと往復（tmux 相当）。デフォルトの cycle_pane_next が同じ prefix+tab を
+# 使っているため、どちらが勝つかは未定義。意図を明示するため cycle_pane_next を外す。
+# ペイン間移動は prefix+h/j/k/l があるので実用上の損失はない。
+last_pane = "prefix+tab"
+cycle_pane_next = ""
+
+# 新しいタブ: prefix+c で「worktree 元（メインのワークツリー）」を cwd にして開く。
+# git worktree list の先頭は必ずメインのワークツリーなので、起点が worktree 側でも
+# リポジトリルート側でも同じ結果になる。git 管理外なら起点の cwd にフォールバック。
+# 引き換えに herdr 標準のタブ名入力プロンプト（prompt_new_tab_name）は出ず、自動生成名になる。
+[[keys.command]]
+key = "prefix+c"
+type = "shell"
+command = 'd="${HERDR_ACTIVE_PANE_CWD:-$PWD}"; root=$(git -C "$d" worktree list --porcelain 2>/dev/null | head -1 | cut -d" " -f2-); herdr tab create --cwd "${root:-$d}" --focus'
+description = "New tab at main worktree"
+
+# --- アプリ・プラグイン起動 ---
+# 起動系は prefix+shift+英字 に統一（prefix+英字 単体はデフォルトの
 # ペイン移動 h/j/k/l などと衝突しやすく、alt は iTerm2 の Option 設定に依存するため）。
 # shift+g は new_worktree で使用済みのため github-dash のみ ctrl+g。prefix+f は空きキーなので nvim に割当。
 
-# neovim: prefix+f で現在のペインのディレクトリ（ワークツリー）を別タブで開く。
-# 0.7.4 では別タブでのコマンド起動は組み込み type になく、tab.create もコマンド指定不可のため、
+# neovim: prefix+f で現在のペインのディレクトリを別タブで開く。
+# HERDR_ACTIVE_PANE_CWD（未文書）はペインのシェルの cwd を指し、前面プロセスの cwd では
+# ないため、claude -w 中でも worktree ではなくリポジトリルートで開く。--cwd を外すと
+# new_cwd = "follow" が働いて foreground_cwd（worktree）になるので、省略はできない。
+# 0.8.2 でも別タブでのコマンド起動は組み込み type になく、tab create もコマンド指定不可のため、
 # tab create → pane run の 2 段で起動する（agent start と違いエージェントパネルに登録されない）。
 # 引数 "." がないと LazyVim はダッシュボードを表示するため、cwd をエクスプローラーで開く。
 # nvim 終了時は "; exit" でシェルも終了し、タブが自動で閉じる。
@@ -43,7 +85,7 @@ type = "plugin_action"
 command = "herdr-file-viewer.open-file-viewer-tab"
 description = "Open file viewer in tab"
 
-# sqlit: prefix+shift+s で別タブ起動（neovim と同じ方式）
+# sqlit: prefix+shift+s で別タブ起動（neovim と同じ方式。cwd の扱いも同じ）
 [[keys.command]]
 key = "prefix+shift+s"
 type = "shell"
