@@ -64,19 +64,17 @@ description = "New tab at main worktree"
 # ペイン移動 h/j/k/l などと衝突しやすく、alt は iTerm2 の Option 設定に依存するため）。
 # shift+g は new_worktree で使用済みのため github-dash のみ ctrl+g。prefix+f は空きキーなので nvim に割当。
 
-# neovim: prefix+f で現在のペインのディレクトリを別タブで開く。
-# HERDR_ACTIVE_PANE_CWD（未文書）はペインのシェルの cwd を指し、前面プロセスの cwd では
-# ないため、claude -w 中でも worktree ではなくリポジトリルートで開く。--cwd を外すと
-# new_cwd = "follow" が働いて foreground_cwd（worktree）になるので、省略はできない。
-# 0.8.2 でも別タブでのコマンド起動は組み込み type になく、tab create もコマンド指定不可のため、
-# tab create → pane run の 2 段で起動する（agent start と違いエージェントパネルに登録されない）。
+# neovim: prefix+f で popup 起動。
 # 引数 "." がないと LazyVim はダッシュボードを表示するため、cwd をエクスプローラーで開く。
-# nvim 終了時は "; exit" でシェルも終了し、タブが自動で閉じる。
+# popup に cwd を指定する口はないが、実測では起点ペインのシェルの cwd（claude -w 中でも
+# worktree ではなくリポジトリルート）で開くため、タブ方式のときと同じ場所になる。
 [[keys.command]]
 key = "prefix+f"
-type = "shell"
-command = 'p=$(herdr tab create --cwd "${HERDR_ACTIVE_PANE_CWD:-$PWD}" --label nvim --focus | jq -r .result.root_pane.pane_id) && herdr pane run "$p" "nvim . ; exit"'
-description = "Open neovim in new tab"
+type = "popup"
+command = "nvim ."
+description = "Open neovim in popup"
+width = "85%"
+height = "85%"
 
 # herdr-file-viewer: prefix+shift+e で別タブ起動（既にタブがあればそこへ切り替え）
 [[keys.command]]
@@ -85,12 +83,14 @@ type = "plugin_action"
 command = "herdr-file-viewer.open-file-viewer-tab"
 description = "Open file viewer in tab"
 
-# sqlit: prefix+shift+s で別タブ起動（neovim と同じ方式。cwd の扱いも同じ）
+# sqlit: prefix+shift+s で popup 起動（neovim と同じ方式）
 [[keys.command]]
 key = "prefix+shift+s"
-type = "shell"
-command = 'p=$(herdr tab create --cwd "${HERDR_ACTIVE_PANE_CWD:-$PWD}" --label sqlit --focus | jq -r .result.root_pane.pane_id) && herdr pane run "$p" "sqlit ; exit"'
-description = "Open sqlit in new tab"
+type = "popup"
+command = "sqlit"
+description = "Open sqlit in popup"
+width = "85%"
+height = "85%"
 
 # lazygit: prefix+shift+l で popup 起動
 [[keys.command]]
