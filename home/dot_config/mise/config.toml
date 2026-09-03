@@ -56,6 +56,7 @@ golangci-lint = "latest"
 gomigrate = "latest"
 gotestsum = "latest"
 skeema = "latest"
+"go:golang.org/x/tools/cmd/godoc" = "latest"
 
 # [tools.kubernetes]
 kubectl = "latest"
