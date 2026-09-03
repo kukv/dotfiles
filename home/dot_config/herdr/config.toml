@@ -12,7 +12,7 @@ show_agent_labels_on_pane_borders = true
 # エージェント行に状態テキスト（idle / done など）を表示する。
 # デフォルトの rows は state_icon（色付きドット）のみで state_text を含まない。
 [ui.sidebar.agents]
-rows = [["state_icon", "state_text", "agent"], ["workspace", "tab"], ["terminal_title_stripped"]]
+rows = [["state_icon", "state_text"], ["workspace", "tab"], ["terminal_title_stripped"], ["agent"]]
 
 # アプリ内トーストではなく OS の通知センターに出す（別ウィンドウにいても気づける）
 [ui.toast]
