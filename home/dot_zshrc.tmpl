@@ -103,7 +103,10 @@ alias history='history -f'
 alias relogin='exec $SHELL -l'
 alias reload='source ~/.zshrc'
 alias cls='clear'
+alias cdh='cd ~'
 alias v='nvim'
+alias cc='claude'
+alias ccw='claude -w'
 {{- if eq .chezmoi.os "darwin" }}
 # provision this machine now (kukv/os-setup launchd wrapper; ~/.local/bin is on PATH)
 alias update_os='os-setup-pull.sh'
