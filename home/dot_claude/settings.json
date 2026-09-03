@@ -37,6 +37,9 @@
     "defaultMode": "auto"
   },
   "model": "claude-fable-5[1m]",
+  "attribution": {
+    "sessionUrl": false
+  },
   "hooks": {
     "SessionStart": [
       {
