@@ -7,6 +7,8 @@ experimental = true
 # .node-version 等の言語固有バージョンファイルを読まない (mise.toml で一元管理)
 idiomatic_version_file_enable_tools = []
 
+minimum_release_age_excludes = ["github:kukv/octoscope"]
+
 [settings.npm]
 package_manager = "pnpm"
 
@@ -130,6 +132,7 @@ eza = "latest"
 bat = "latest"
 zoxide = "latest"
 ghq = "latest"
+"github:kukv/octoscope" = "latest"
 
 # [tools.aws]
 aws-cli = { version = "latest", symlink_bins = "true" }
