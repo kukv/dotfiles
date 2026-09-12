@@ -94,7 +94,10 @@ jobs:
       - name: Assert macOS signer + ssh routing
         if: runner.os == 'macOS'
         run: |
-          ! grep -q "alias ssh='ssh.exe'" "$DEST/.zshrc"
+          if grep -q "alias ssh='ssh.exe'" "$DEST/.zshrc"; then
+            echo 'WSL ssh alias leaked into macOS zshrc' >&2
+            exit 1
+          fi
           # macOS signs commits via the local 1Password app bundle
           grep -q 'MacOS/op-ssh-sign' "$DEST/.gitconfig"
           if grep -q 'op-ssh-sign-wsl.exe' "$DEST/.gitconfig"; then echo 'WSL signer leaked into macOS gitconfig' >&2; exit 1; fi
