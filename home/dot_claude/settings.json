@@ -78,13 +78,6 @@
         "repo": "anthropics/skills"
       }
     },
-    "br-claude-plugins": {
-      "source": {
-        "source": "github",
-        "repo": "bright-room/br-claude-plugins"
-      },
-      "autoUpdate": true
-    },
     "openai-codex": {
       "source": {
         "source": "github",
