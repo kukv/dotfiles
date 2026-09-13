@@ -115,3 +115,13 @@ key = "prefix+ctrl+g"
 type = "plugin_action"
 command = "kukv.github-dash.open"
 description = "Open GitHub dashboard"
+
+# octoscope: prefix+shift+o で popup 起動
+# prefix+o はデフォルトの open_notification_target が使っているため shift を付けている。
+[[keys.command]]
+key = "prefix+shift+o"
+type = "popup"
+command = "octoscope"
+description = "Open octoscope in popup"
+width = "85%"
+height = "85%"
