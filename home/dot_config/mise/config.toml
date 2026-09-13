@@ -109,6 +109,7 @@ rust = "latest"
 
 # [tools.ai]
 herdr = "latest"
+"github:yusukebe/ax" = "latest"
 "npm:skills" = "latest"
 "npm:@openai/codex" = "latest"
 "npm:@drawio/mcp" = "latest"
