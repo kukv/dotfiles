@@ -9,6 +9,13 @@ idiomatic_version_file_enable_tools = []
 
 minimum_release_age_excludes = ["github:kukv/octoscope"]
 
+[settings.github]
+# gh はトークンを keyring に置くため hosts.yml に oauth_token が無く、mise の gh 連携
+# (優先度 7) では取得できない。ドキュメント推奨どおり credential_command で取り出す。
+# https://mise.jdx.dev/dev-tools/github-tokens.html
+# ansible-pull 側は MISE_GITHUB_TOKEN (優先度 1) が勝つため、この設定は対話シェル用。
+credential_command = "gh auth token"
+
 [settings.npm]
 package_manager = "pnpm"
 
