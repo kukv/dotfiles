@@ -134,6 +134,7 @@ cloudflared = "latest"
 
 # [tools.cli]
 ripgrep = "latest"
+ast-grep = "latest"
 fd = "latest"
 fzf = "latest"
 eza = "latest"
