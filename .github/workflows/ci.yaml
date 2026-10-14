@@ -129,3 +129,6 @@ jobs:
 
       - name: mise bootstrap plan (every machine selection)
         run: tests/bootstrap/plan.sh
+
+      - name: chezmoi-apply.sh
+        run: tests/bootstrap/chezmoi-apply.test.sh

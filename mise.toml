@@ -21,3 +21,9 @@ default = "true"
 # Empty: chezmoi templates fall back to <homeDir>/.ssh/git_signing_key.pub.
 [vars.git_signing_key_file]
 default = ""
+
+# ==========================================================================
+# chezmoi (kept for now; see spec "将来フェーズ")
+# ==========================================================================
+[bootstrap.hooks.pre-tools]
+run = "GIT_NAME='{{ vars.git_name }}' GIT_EMAIL='{{ vars.git_email }}' USE_1PASSWORD='{{ vars.use_1password }}' GIT_SIGNING_KEY_FILE='{{ vars.git_signing_key_file }}' '{{ config_root }}/bootstrap/chezmoi-apply.sh' '{{ config_root }}'"
