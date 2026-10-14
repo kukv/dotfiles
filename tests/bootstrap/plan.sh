@@ -21,3 +21,14 @@ done
 echo "== work module flips use_1password"
 [ "$(mise -E wsl,work vars use_1password)" = "false" ]
 [ "$(mise vars use_1password)" = "true" ]
+
+if [ "$(uname -s)" = Linux ]; then
+  echo "== linux declarations are present"
+  out="$(mise bootstrap plan 2>&1)"
+  for want in apt:language-pack-ja apt:zsh apt:libssl-dev apt:qemu-system-arm \
+              /etc/systemd/resolved.conf.d/dns.conf systemd-resolved; do
+    echo "$out" | grep -q "$want" || { echo "FAIL: plan lacks $want" >&2; exit 1; }
+  done
+  # plan does not cover the login shell; status does (as "user login_shell")
+  mise bootstrap status 2>&1 | grep -q 'login_shell' || { echo "FAIL: status lacks login_shell" >&2; exit 1; }
+fi
