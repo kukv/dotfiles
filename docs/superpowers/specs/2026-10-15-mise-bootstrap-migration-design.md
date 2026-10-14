@@ -81,17 +81,17 @@ dotfiles/
 | os_base: language-pack-ja / manpages-ja / manpages-ja-dev、`locale-gen ja_JP.UTF-8`、`/etc/default/locale` の `LANG` | `mise.linux.toml` | apt + post-packages hook スクリプト ※ |
 | os_base: TZ Asia/Tokyo | `mise.linux.toml` | hook(`timedatectl set-timezone`)※ |
 | os_base: resolved.conf の DNS(8.8.8.8 1.1.1.1 / fallback 8.8.4.4 1.0.0.1)+ restart | `mise.linux.toml` | `[bootstrap.files]` で `/etc/systemd/resolved.conf.d/dns.conf`、restart は hook ※ |
-| os_base: zsh 導入 + chsh | `mise.linux.toml` | `apt:zsh` + `[bootstrap.user] shell` |
+| os_base: zsh 導入 + chsh | `mise.linux.toml` | `apt:zsh` + `[bootstrap.user] login_shell` |
 | os_base: Linux Homebrew + gcc/cmake | 廃止 | — |
 | os_base(WSL): `/etc/wsl.conf`(systemd=true / generateResolvConf=false / hostname=wsl2 / automount options) | `mise.wsl.toml` | `[bootstrap.files]` |
-| os_base(WSL): `/etc/resolv.conf` → `../run/systemd/resolve/stub-resolv.conf` | `mise.wsl.toml` | files(symlink 可否 ※、不可なら hook) |
+| os_base(WSL): `/etc/resolv.conf` → `../run/systemd/resolve/stub-resolv.conf` | `mise.wsl.toml` | hook(`[bootstrap.files]` は symlink を作れないため) |
 | os_base(WSL): wslu(Ubuntu < 26.04 のみ) | `mise.wsl.toml` | hook でバージョン判定 ※ |
 | os_base(Mac): `brew upgrade --formula`(sudo を要する cask は除外) | `mise.macos.toml` | post-packages hook(`packages upgrade` は cask も対象にし sudo で落ちる恐れ ※) |
 | packages: Ruby ビルド依存、ARM クロス toolchain | `mise.linux.toml` | apt |
-| packages(Mac): tap `cirruslabs/cli` + `brew trust` | `mise.macos.toml` | `[bootstrap.brew.taps]` + hook ※ |
+| packages(Mac): tap `cirruslabs/cli` + `brew trust` | `mise.macos.toml` | hook(`brew tap` + `brew trust`。mise の brew manager は tap 宣言なしで formula を扱えるが、手動導入の tart を `brew upgrade` するため tap と trust は維持)※ |
 | packages(Mac): formulae / casks / mas | `mise.macos.toml` | `brew:` / `brew-cask:` / `mas:`(sudo 必須 cask は従来どおり手動) |
 | packages: Claude Code CLI | `mise.toml` | `bootstrap` task(`which claude` で冪等化) |
-| tools: chezmoi data 注入 + `chezmoi update --force` | `mise.toml` | pre-dotfiles hook(§4) |
+| tools: chezmoi data 注入 + `chezmoi update --force` | `mise.toml` | pre-tools hook(§4) |
 | tools: corepack disable、herdr plugins、Claude skills | `mise.toml` | `bootstrap` task |
 | tools: `mise install`(token 付き) | bootstrap `tools` ステップ | token は環境変数(§4) |
 | scheduler | §5 | — |
@@ -111,7 +111,7 @@ required = "Run mise vars prompt"
 [vars.use_1password]
 default = "true"
 [vars.git_signing_key_file]
-default = "~/.ssh/git_signing_key.pub"
+default = ""   # 空なら chezmoi data に書かず、テンプレート側の既定値(<homeDir>/.ssh/git_signing_key.pub)を使う
 
 # mise.work.toml
 [vars]
@@ -120,7 +120,7 @@ use_1password = "false"
 
 - prompt の答えは `$MISE_STATE_DIR/vars.toml`(マシンローカル)に保存される。聞くのは `--prompt-vars` / `mise vars prompt` のときだけ。
 - var の優先順位: 環境変数 > config ファイルの値 > 保存済みの答え > default。`use_1password` は module で決まるので prompt を付けない。
-- **chezmoi 連携:** pre-dotfiles hook で `{{ config_root }}/bootstrap/chezmoi-apply.sh` を呼ぶ。
+- **chezmoi 連携:** pre-tools hook で(`[dotfiles]` を宣言しないので dotfiles ステップの hook が走るか不確実なこと、chezmoi が配置する `~/.config/mise/config.toml` を tools ステップより前に置く必要があることから pre-tools を使う) `{{ config_root }}/bootstrap/chezmoi-apply.sh` を呼ぶ。
   1. vars から `~/.config/chezmoi/chezmoi.toml`(0600)を生成する。`[data]` に git_name / git_email / use_1password / git_signing_key_file を書き、`sourceDir` は bootstrap チェックアウト(`$MISE_DATA_DIR/bootstrap-repo`、`.chezmoiroot` により `home/` が解釈される)にする。
   2. `chezmoi apply --force` を実行する。
 - `~/.local/share/chezmoi` の別チェックアウトは廃止する。bootstrap チェックアウトは直接編集しない(編集は開発用 clone → push → `--update`)。
@@ -156,7 +156,7 @@ mise bootstrap --from https://github.com/kukv/dotfiles.git --update --yes
 2. 旧定期実行を停止・削除する。Linux: `os-setup.timer` / `.service`。Mac: `com.kukv.os-setup` とログローテーション agent、`~/.local/bin/os-setup-pull.sh`。
 3. extra_vars / os-setup.env の秘密情報を `~/.local/etc/bootstrap.env` へ移す。
 4. 既存の `~/.config/chezmoi/chezmoi.toml` の値を `mise vars git_name=… git_email=…` で保存し、`miserc.local.toml` に `env` を書く。
-5. (Linux)mise.run で mise を入れ直してから linuxbrew をアンインストールする。`dot_zprofile.tmpl` の linuxbrew 行は存在チェック付き(`[ -x … ] && eval …`)に変更しておく。
+5. (Linux)mise.run で mise を入れ直してから linuxbrew をアンインストールする。`dot_zprofile.tmpl` の linuxbrew 行は migration ブランチで削除する(main は全台移行まで変更しないため、未移行マシンには影響しない)。
 6. `mise bootstrap --from …?ref=migration` を `--dry-run` → `plan` で確認してから適用する。
 7. 旧 `~/.local/share/chezmoi` を削除する。
 
