@@ -10,7 +10,7 @@
 "apt:bzip2" = "latest"
 "apt:ca-certificates" = "latest"
 "apt:curl" = "latest"
-"apt:dnsutils" = "latest"
+"apt:bind9-dnsutils" = "latest"
 "apt:gnupg" = "latest"
 "apt:lsb-release" = "latest"
 "apt:software-properties-common" = "latest"

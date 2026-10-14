@@ -17,6 +17,9 @@ RUN userdel -r ubuntu 2>/dev/null || true && \
     echo 'tech ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/00-test && \
     chmod 0440 /etc/sudoers.d/00-test
 
+# Test user has no password; let chsh (used by mise's [bootstrap.user]) through. Test image only.
+RUN sed -i '1i auth sufficient pam_permit.so' /etc/pam.d/chsh
+
 CMD ["/sbin/init"]
 
 FROM base AS dev
