@@ -38,3 +38,11 @@ if [ "$(uname -s)" = Linux ]; then
   mise -E wsl bootstrap plan 2>&1 | grep -q /etc/wsl.conf || { echo "FAIL: wsl.conf missing" >&2; exit 1; }
   ! mise bootstrap plan 2>&1 | grep -q /etc/wsl.conf || { echo "FAIL: wsl.conf leaked into base" >&2; exit 1; }
 fi
+
+if [ "$(uname -s)" = Darwin ]; then
+  echo "== macos declarations are present"
+  out="$(mise bootstrap plan 2>&1)"
+  for want in brew:mise brew:mas brew-cask:1password brew-cask:docker-desktop mas:497799835; do
+    echo "$out" | grep -q "$want" || { echo "FAIL: plan lacks $want" >&2; exit 1; }
+  done
+fi
