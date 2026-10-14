@@ -5,14 +5,16 @@
 
 # ==========================================================================
 # vars (per-machine answers are saved by `mise bootstrap --prompt-vars`)
+# git_name / git_email default to "" so other mise commands work without answers;
+# bootstrap/chezmoi-apply.sh fails if they are still empty.
 # ==========================================================================
 [vars.git_name]
 prompt = "Git user.name"
-required = "Run `mise vars prompt` to set git_name"
+default = ""
 
 [vars.git_email]
 prompt = "Git user.email"
-required = "Run `mise vars prompt` to set git_email"
+default = ""
 
 # Overridden to "false" by mise.work.toml (company PC signs with a local key).
 [vars.use_1password]

@@ -37,4 +37,14 @@ run env GIT_NAME="Ada" GIT_EMAIL="ada@example.com" USE_1PASSWORD=true GIT_SIGNIN
   CHEZMOI_APPLY_ARGS="--exclude=externals" "$script" "$repo"
 grep -q 'name = Ada' "$tmp/home/.gitconfig" || fail ".gitconfig not rendered"
 
+echo "== empty GIT_NAME fails early without writing chezmoi.toml"
+mkdir -p "$tmp/empty-home"
+rc=0
+HOME="$tmp/empty-home" XDG_CONFIG_HOME="$tmp/empty-home/.config" \
+  GIT_NAME="" GIT_EMAIL="ada@example.com" USE_1PASSWORD=true GIT_SIGNING_KEY_FILE="" \
+  CHEZMOI_SKIP_APPLY=1 "$script" "$repo" 2>"$tmp/err" || rc=$?
+[ "$rc" -ne 0 ] || fail "must exit non-zero when GIT_NAME is empty"
+[ ! -e "$tmp/empty-home/.config/chezmoi/chezmoi.toml" ] || fail "chezmoi.toml must not be created"
+grep -q 'mise vars prompt' "$tmp/err" || fail "message must mention mise vars prompt"
+
 echo "PASS"

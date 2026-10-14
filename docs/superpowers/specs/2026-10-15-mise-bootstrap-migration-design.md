@@ -104,10 +104,10 @@ dotfiles/
 # mise.toml
 [vars.git_name]
 prompt = "Git user.name"
-required = "Run mise vars prompt"
+default = ""   # required は使わない(未回答でも他の mise コマンドを動かすため)。空なら chezmoi-apply.sh が mise vars prompt を案内して exit 1
 [vars.git_email]
 prompt = "Git user.email"
-required = "Run mise vars prompt"
+default = ""   # required は使わない(未回答でも他の mise コマンドを動かすため)。空なら chezmoi-apply.sh が mise vars prompt を案内して exit 1
 [vars.use_1password]
 default = "true"
 [vars.git_signing_key_file]

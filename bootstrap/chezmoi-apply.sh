@@ -12,6 +12,12 @@ set -eu
 src="$1"
 conf_dir="${XDG_CONFIG_HOME:-$HOME/.config}/chezmoi"
 
+# mise vars default to "" so other mise commands work without answers; enforce here.
+if [ -z "${GIT_NAME:-}" ] || [ -z "${GIT_EMAIL:-}" ]; then
+  echo "error: git_name / git_email are empty. Run \`mise vars prompt\` (or re-run bootstrap with --prompt-vars)." >&2
+  exit 1
+fi
+
 mkdir -p "$conf_dir"
 chmod 700 "$conf_dir"
 (
@@ -32,8 +38,7 @@ chmod 600 "$conf_dir/chezmoi.toml"
 
 [ -n "${CHEZMOI_SKIP_APPLY:-}" ] && exit 0
 
-# Run from $HOME so mise does not load this repo's mise.toml (its required vars
-# are only needed by the outer bootstrap run, not by chezmoi).
+# Run from $HOME so mise does not load this repo's mise.toml (not needed by chezmoi).
 cd "$HOME"
 
 # --force: overwrite files changed at runtime (e.g. ~/.claude/settings.json) without a TTY.
