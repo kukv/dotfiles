@@ -24,11 +24,6 @@ export LC_ALL=en_US.UTF-8
 export JOBMAX=$(sysctl -n hw.logicalcpu)
 {{- else }}
 # ========================================================
-# = Homebrew (Linux / WSL)
-# ========================================================
-eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-
-# ========================================================
 # = Build parallelization
 # ========================================================
 export JOBMAX=$(nproc)

@@ -108,11 +108,11 @@ alias v='nvim'
 alias cc='claude'
 alias ccw='claude -w'
 {{- if eq .chezmoi.os "darwin" }}
-# provision this machine now (kukv/os-setup launchd wrapper; ~/.local/bin is on PATH)
-alias update_os='os-setup-pull.sh'
+# provision this machine now (mise bootstrap; log: ~/.local/log/mise-bootstrap/)
+alias update_os='~/.local/share/mise/bootstrap-repo/bootstrap/scheduled-run.sh'
 {{- else if eq .chezmoi.os "linux" }}
-# provision this machine now (kukv/os-setup systemd service; root-owned unit)
-alias update_os='sudo systemctl start os-setup.service'
+# provision this machine now (mise bootstrap user unit; log: journalctl --user -u dev.mise.mise-bootstrap)
+alias update_os='systemctl --user start dev.mise.mise-bootstrap.service'
 {{- end }}
 {{- if (index .chezmoi.kernel "osrelease" | default "" | lower | contains "microsoft") }}
 

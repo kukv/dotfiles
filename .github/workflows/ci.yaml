@@ -65,6 +65,11 @@ jobs:
           if grep -q 'MacOS/op-ssh-sign' "$DEST/.gitconfig"; then echo 'macOS signer leaked into Linux gitconfig' >&2; exit 1; fi
           test ! -f "$DEST/.ssh/config"
 
+      - name: Assert no os-setup / linuxbrew remnants
+        run: |
+          if grep -q linuxbrew "$DEST/.zprofile"; then echo 'linuxbrew left in zprofile' >&2; exit 1; fi
+          if grep -q 'os-setup' "$DEST/.zshrc"; then echo 'os-setup reference left in zshrc' >&2; exit 1; fi
+
       - name: chezmoi apply — local-key (no 1Password) variant
         if: runner.os == 'Linux'
         run: |
