@@ -218,3 +218,15 @@ os-setup は README に移転先を書いてアーカイブする(アーカイ�
 |---|---|
 | B. sheldon | mise `[tools]` で導入(registry: `aqua:rossmacarthur/sheldon`)。プラグインとタグを `plugins.toml` で宣言し、renovate regex で追従する。oh-my-zsh の `plugins/git` だけ読み込み、alien は単体で読み込む(alien の `zsh-async` submodule を sheldon 側で解決できるか要検証) |
 | C. B + starship | プロンプトを starship に置き換える(mise registry にあり、renovate の mise manager で追従)。見た目が変わる |
+
+## 検証結果(Task 1 スパイク、mise 2026.10.9)
+
+| # | 確認事項 | 結果 | 採用した方式 |
+|---|---|---|---|
+| Q1 | `.miserc.toml` の `auto_env` で platform ファイルが読まれる | 読まれる。`mise vars probe_platform` が `linux`(`mise.linux.toml`)。 | `.miserc.toml` に `auto_env = true`。`MISE_AUTO_ENV` の export は不要 |
+| Q2 | グローバル `miserc.local.toml` の `env` がプロジェクト module を選ぶ | 選ぶ。`env = ["wsl"]` で `probe_module` が `wsl`(`mise.wsl.toml`)になり、platform ファイルも併せて読まれる。 | `~/.config/mise/miserc.local.toml` の `env`。`-E` 明示は不要 |
+| Q3 | hook で `vars.*` / `config_root` が展開される。pre-dotfiles hook の有無 | 展開される(`vars=base root=/tmp/spike`)。`[dotfiles]` 未宣言でも pre-dotfiles hook は実行される(`--only dotfiles,tools` の dry-run で表示)。 | pre-tools hook を使う |
+| Q4 | 同名の環境変数で var を上書きできる(変数名の形式) | 上書きできる。`probe_base=ci mise vars probe_base` が `ci`。`MISE_VAR_probe_base=ci` は効かない(`base` のまま)。 | var 名そのままの環境変数(`<name>=<value>`) |
+| Q5 | hook で配置した設定の tools が同じ実行で入る | 入る。post-packages hook が置いた `mise.local.toml` の `jq` が、同じ `mise bootstrap --only packages,tools` の tools ステップで install された。 | 先頭での `mise install` は不要 |
+| Q6 | `--from` チェックアウトで trust を求められない | bootstrap 実行中は求められない(未 trust のままでも hook 展開・tools まで進む)。ただし実行後も `mise trust --show` は untrusted で、そのチェックアウトで素の `mise` コマンドを実行すると "not trusted" エラーになる。ref 付き `?ref=main` は `git clone` の後に `git checkout main --` で実行される。`--from` の URL とチェックアウトの origin は文字列一致が必要(`/tmp/x.git` と `file:///tmp/x.git` は不一致でエラー)。 | bootstrap 後に素の mise を使うなら `mise trust <checkout>` を挟む。origin の表記は `--from` と揃える |
+| Q7 | dirty なチェックアウトで `--update` が止まる | 一律には止まらない。`git pull` の fast-forward が dirty なファイルと衝突しない場合は成功(変更は保持)、同じファイルが上流で変わっていると git がエラーで中断し `bootstrap from repository failed`(終了コード 1)。`--update` なしでは dirty でも問題なく進む。`--dry-run --update` は fast-forward しない。 | 運用で回避(チェックアウトを dirty にしない)。コード対応なし |
