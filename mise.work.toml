@@ -1,0 +1,4 @@
+# Module "work": company PC. Select with env = ["wsl", "work"].
+[vars]
+# The company PC has no 1Password; commits are signed with a local SSH key.
+use_1password = "false"

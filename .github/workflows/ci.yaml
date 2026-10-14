@@ -102,3 +102,30 @@ jobs:
           grep -q 'MacOS/op-ssh-sign' "$DEST/.gitconfig"
           if grep -q 'op-ssh-sign-wsl.exe' "$DEST/.gitconfig"; then echo 'WSL signer leaked into macOS gitconfig' >&2; exit 1; fi
           test -f "$DEST/.ssh/config"
+
+  bootstrap:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install mise
+        run: |
+          curl -fsSL https://mise.run | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: shellcheck bootstrap scripts
+        if: runner.os == 'Linux'
+        run: |
+          files=$(git ls-files 'bootstrap/*.sh' 'tests/bootstrap/*.sh')
+          [ -z "$files" ] || shellcheck $files
+
+      - name: mise bootstrap plan (every machine selection)
+        run: tests/bootstrap/plan.sh

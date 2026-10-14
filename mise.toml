@@ -1,0 +1,23 @@
+# mise bootstrap project for kukv/dotfiles.
+# Base: settings every machine shares. OS differences live in mise.{linux,macos}.toml,
+# machine roles in modules (mise.wsl.toml, mise.work.toml) selected per machine in
+# ~/.config/mise/miserc.local.toml. See docs/superpowers/specs/2026-10-15-mise-bootstrap-migration-design.md
+
+# ==========================================================================
+# vars (per-machine answers are saved by `mise bootstrap --prompt-vars`)
+# ==========================================================================
+[vars.git_name]
+prompt = "Git user.name"
+required = "Run `mise vars prompt` to set git_name"
+
+[vars.git_email]
+prompt = "Git user.email"
+required = "Run `mise vars prompt` to set git_email"
+
+# Overridden to "false" by mise.work.toml (company PC signs with a local key).
+[vars.use_1password]
+default = "true"
+
+# Empty: chezmoi templates fall back to <homeDir>/.ssh/git_signing_key.pub.
+[vars.git_signing_key_file]
+default = ""

@@ -1,0 +1,2 @@
+# Read before any other config: load mise.linux.toml / mise.macos.toml automatically.
+auto_env = true
