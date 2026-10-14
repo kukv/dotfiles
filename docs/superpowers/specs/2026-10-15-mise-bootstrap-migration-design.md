@@ -170,8 +170,9 @@ os-setup は README に移転先を書いてアーカイブする(アーカイ�
 - 各マシンで `chezmoi diff` が空。
 - 手順 1 の保存ファイルとの差分が意図したもの(`update_os`、zprofile)だけ。
 - timer / agent を手動で起動して成功する。
-- 新規 WSL ディストロ(`wsl --install Ubuntu --name mise-test`)で init.sh からゼロ構築できる。
-- Mac は実機での `plan` 確認を必須とし、tart VM での新規構築は任意。
+- Docker の素の Ubuntu 26.04(systemd を PID 1 にしたコンテナ、`tests/docker/`)で、init.sh からゼロ構築できる。
+- テストと動作確認は原則このコンテナで行い、実機を汚さない。コンテナで確認できない項目(resolv.conf の symlink、WSL の interop と再起動後の挙動)は個人 WSL の移行時に確認する。
+- Mac の動作確認は別計画で行う(本計画では macos CI runner の `plan` まで)。
 
 **最初に実機で確認する項目:**
 1. `--from` プロジェクトにグローバル `miserc.local.toml` の `env` が効くか(不可なら `-E` を明示する)。

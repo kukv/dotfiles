@@ -22,7 +22,9 @@ OS 差分は platform ファイル(`mise.linux.toml` / `mise.macos.toml`)、マ�
 - 定期実行は週次。Mac は日曜 21:00。
 - シェルスクリプトは POSIX sh(`#!/bin/sh`)、`set -eu`、shellcheck を通す。冪等であること(hook と bootstrap task は毎回走る)。
 - base(`mise.toml` と platform ファイル)には全マシン共通のものだけを置く。差分は module に置く。
-- 実機への**適用**(`--dry-run` / `plan` 以外)は Task 11 以降でのみ行い、ユーザーの確認を取ってから実施する。
+- **テストと動作確認は Docker の Ubuntu コンテナ内で行い、ホスト(実機)を汚さない。** ファイル編集・`chmod`・`git` はホストで、`Run(コンテナ):` と書いたコマンドは `tests/docker/exec.sh '<command>'` で実行する(既定の `dev` サービスでは cwd が `/dotfiles` = このリポジトリの読み取り専用マウント)。
+- コンテナで確認できないもの: resolv.conf の symlink(Docker が bind mount しているため。`wsl-base.sh` は `/.dockerenv` があればスキップする)、WSL 固有の実挙動(interop・`ssh.exe`・再起動後の systemd)、macOS 全般。WSL 固有は Task 12 の個人 WSL 移行時に確認し、**macOS の動作確認は別計画**で行う(本計画では macos CI runner の `plan` までを確認する)。
+- 実機への**適用**は Task 12 以降でのみ行い、ユーザーの確認を取ってから実施する。
 
 ## File Structure
 
@@ -43,13 +45,129 @@ OS 差分は platform ファイル(`mise.linux.toml` / `mise.macos.toml`)、マ�
 | `bootstrap/scheduled-run.sh` | 定期実行ラッパー(env 読み込み → self-update → bootstrap) |
 | `tests/bootstrap/chezmoi-apply.test.sh` | chezmoi-apply.sh のテスト |
 | `tests/bootstrap/plan.sh` | env の組み合わせごとに `mise bootstrap plan` を流すスモークテスト |
-| `.github/workflows/ci.yaml` | 上記 2 テストと shellcheck を流すジョブを追加 |
+| `tests/bootstrap/init.test.sh` | init.sh の引数処理と生成物のテスト |
+| `tests/docker/Dockerfile` | テスト用 Ubuntu 26.04 + systemd(`base`: E2E 用の素の状態、`dev`: mise と shellcheck 入り) |
+| `tests/docker/compose.yaml` | `dev`(リポジトリを `/dotfiles` に読み取り専用でマウント)と `e2e` の 2 サービス |
+| `tests/docker/exec.sh` | コンテナ内でユーザー `tech` としてコマンドを実行するラッパー |
+| `.github/workflows/ci.yaml` | 上記テストと shellcheck を流すジョブを追加(runner 上で直接実行。Docker は使わない) |
 
 `bootstrap/` 配下のスクリプトはすべて `git update-index --chmod=+x` で実行ビットを付ける。
 
 ---
 
-### Task 1: スパイク — mise の未確認挙動を実機で確かめる
+### Task 0: テスト用 Docker 環境
+
+**Files:**
+- Create: `tests/docker/Dockerfile`, `tests/docker/compose.yaml`, `tests/docker/exec.sh`
+
+**Interfaces:**
+- Produces: `tests/docker/exec.sh [-s dev|e2e] '<command>'`。ユーザー `tech`(uid 1000)、`XDG_RUNTIME_DIR=/run/user/1000`、PATH 先頭に `~/.local/bin`。cwd は `dev` なら `/dotfiles`、`e2e` なら `/home/tech`。
+  コンテナの初期化は `docker compose -f tests/docker/compose.yaml down && docker compose -f tests/docker/compose.yaml up -d --build <service>`。
+
+- [ ] **Step 1: Dockerfile を書く**
+
+`tests/docker/Dockerfile`(ベースイメージは os-setup の `docker/mock` と同じ digest):
+
+```dockerfile
+# Throwaway Ubuntu with systemd as PID 1, for exercising mise bootstrap without
+# touching a real machine. Targets:
+#   base: nothing preinstalled (end-to-end test of bootstrap/init.sh)
+#   dev:  mise + shellcheck (iterating on the bootstrap config)
+FROM ubuntu:26.04@sha256:2260313b31c8c011cd2eebe728008efac1b3982be73eb71348ea2648d2c0e09b AS base
+
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends \
+        systemd systemd-sysv systemd-resolved dbus sudo curl ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+# The image ships an "ubuntu" user at uid 1000; replace it with tech (uid 1000)
+# to match the real machines. The test-only sudoers file is named so that
+# init.sh still creates /etc/sudoers.d/tech itself.
+RUN userdel -r ubuntu 2>/dev/null || true && \
+    useradd -m -u 1000 -s /bin/bash tech && \
+    echo 'tech ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/00-test && \
+    chmod 0440 /etc/sudoers.d/00-test
+
+CMD ["/sbin/init"]
+
+FROM base AS dev
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends git shellcheck && \
+    rm -rf /var/lib/apt/lists/*
+USER tech
+RUN curl -fsSL https://mise.run | sh
+USER root
+```
+
+- [ ] **Step 2: compose.yaml と exec.sh を書く**
+
+`tests/docker/compose.yaml`:
+
+```yaml
+---
+services:
+  dev:
+    build:
+      context: "."
+      target: "dev"
+    hostname: "mise-dev"
+    privileged: true
+    tty: true
+    volumes:
+      - "../..:/dotfiles:ro"
+
+  e2e:
+    build:
+      context: "."
+      target: "base"
+    hostname: "mise-e2e"
+    privileged: true
+    tty: true
+```
+
+`tests/docker/exec.sh`:
+
+```sh
+#!/bin/sh
+# Run a command as tech inside a test container.
+# usage: exec.sh [-s dev|e2e] '<command>'   (default service: dev)
+set -eu
+svc=dev
+if [ "${1:-}" = "-s" ]; then svc="$2"; shift 2; fi
+case "$svc" in
+  dev) workdir=/dotfiles ;;
+  *)   workdir=/home/tech ;;
+esac
+exec docker compose -f "$(cd "$(dirname "$0")" && pwd)/compose.yaml" exec \
+  -u tech -w "$workdir" \
+  -e XDG_RUNTIME_DIR=/run/user/1000 \
+  -e PATH=/home/tech/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+  "$svc" bash -lc "$1"
+```
+
+- [ ] **Step 3: 起動して確認する**
+
+Run(ホスト):
+
+```bash
+chmod +x tests/docker/exec.sh
+docker compose -f tests/docker/compose.yaml up -d --build dev
+tests/docker/exec.sh 'systemctl is-system-running --wait; id; mise --version; ls /dotfiles/home | head -3'
+```
+
+Expected: `running` または `degraded`(コンテナでは一部 unit が失敗しても可)、`uid=1000(tech)`、mise のバージョン、`home/` の中身が表示される。
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add tests/docker/Dockerfile tests/docker/compose.yaml tests/docker/exec.sh
+git update-index --chmod=+x tests/docker/exec.sh
+git commit -m "test: mise bootstrap 検証用の Docker(Ubuntu + systemd)環境を追加"
+```
+
+---
+
+### Task 1: スパイク — mise の未確認挙動をコンテナで確かめる
 
 この結果で後続タスクの分岐(★印)が決まる。コードは捨てる。
 
@@ -59,10 +177,13 @@ OS 差分は platform ファイル(`mise.linux.toml` / `mise.macos.toml`)、マ�
 **Interfaces:**
 - Produces: 「検証結果」節の Q1〜Q7 の答え。後続タスクの ★ はこれを参照する。
 
+以下の Step 1〜8 はすべて `dev` コンテナ内で実行する(`tests/docker/exec.sh` を 1 回ずつ呼ぶか、`docker compose -f tests/docker/compose.yaml exec -u tech dev bash -l` で入って実行する)。
+ホストの `~/.config/mise` には一切触れない。
+
 - [ ] **Step 1: 使い捨てプロジェクトを作る**
 
 ```bash
-mkdir -p /tmp/claude-1000/spike && cd /tmp/claude-1000/spike && git init -q
+mkdir -p /tmp/spike && cd /tmp/spike && git init -q
 cat > .miserc.toml <<'EOF'
 auto_env = true
 EOF
@@ -96,21 +217,18 @@ Expected: `linux`(Mac なら `macos`)。空またはエラーなら `auto_env` �
 - [ ] **Step 3: Q2 グローバル miserc.local.toml の env が、プロジェクトの module を選ぶか**
 
 ```bash
-cp ~/.config/mise/miserc.local.toml /tmp/claude-1000/miserc.bak 2>/dev/null || true
+mkdir -p ~/.config/mise
 printf 'env = ["wsl"]\n' > ~/.config/mise/miserc.local.toml
 mise vars probe_module
+rm ~/.config/mise/miserc.local.toml
 ```
 
-Expected: `wsl`。だめなら `-E` を明示する方式にする(★Q2)。確認後に元へ戻す:
-
-```bash
-if [ -f /tmp/claude-1000/miserc.bak ]; then mv /tmp/claude-1000/miserc.bak ~/.config/mise/miserc.local.toml; else rm ~/.config/mise/miserc.local.toml; fi
-```
+Expected: `wsl`。だめなら `-E` を明示する方式にする(★Q2)。
 
 - [ ] **Step 4: Q3 hook のテンプレート展開と、[dotfiles] 未宣言時の pre-dotfiles hook**
 
 Run: `mise bootstrap --dry-run --only dotfiles,tools 2>&1 | grep HOOK`
-Expected: `pre-tools` 行に `vars=base root=/tmp/claude-1000/spike` が展開されて出る。`pre-dotfiles` 行の有無を記録する(本計画は pre-tools を使うので、無くても問題ない)。
+Expected: `pre-tools` 行に `vars=base root=/tmp/spike` が展開されて出る。`pre-dotfiles` 行の有無を記録する(本計画は pre-tools を使うので、無くても問題ない)。
 
 - [ ] **Step 5: Q4 同名の環境変数で var を一時上書きできるか(テスト用。保存済みの答えを汚さないため)**
 
@@ -137,9 +255,10 @@ Expected: `tokei` が installed。入っていなければ「tools は実行開�
 ネットワークを使う。ローカルの bare リポジトリで代用する:
 
 ```bash
-cd /tmp/claude-1000 && git clone -q --bare spike spike.git
-cd spike && git add -A && git commit -qm spike && git push -q ../spike.git HEAD:main && cd ..
-mise bootstrap --from "file:///tmp/claude-1000/spike.git" --from-dir /tmp/claude-1000/spike-co --dry-run 2>&1 | tail -10
+cd /tmp && git clone -q --bare spike spike.git
+cd spike && git -c user.name=t -c user.email=t@t add -A && git -c user.name=t -c user.email=t@t commit -qm spike && git push -q ../spike.git HEAD:main && cd ..
+git clone -q spike.git spike-co   # --dry-run はチェックアウトが無いと止まるため先に clone
+mise bootstrap --from "file:///tmp/spike.git" --from-dir /tmp/spike-co --dry-run 2>&1 | tail -10
 ```
 
 Expected: trust を求めるプロンプトやエラーが出ないこと。出るなら init.sh で clone 後に `mise trust <checkout>` を挟む(★Q6)。
@@ -147,8 +266,8 @@ Expected: trust を求めるプロンプトやエラーが出ないこと。出�
 - [ ] **Step 8: Q7 `--update` は dirty なチェックアウトで止まるか**
 
 ```bash
-echo x >> /tmp/claude-1000/spike-co/mise.toml
-mise bootstrap --from "file:///tmp/claude-1000/spike.git" --from-dir /tmp/claude-1000/spike-co --update --dry-run 2>&1 | tail -5
+echo x >> /tmp/spike-co/mise.toml
+mise bootstrap --from "file:///tmp/spike.git" --from-dir /tmp/spike-co --update --dry-run 2>&1 | tail -5
 ```
 
 Expected: 挙動(エラー / 警告して続行)を記録する。エラーで止まる場合、spec §4 の注意書きのとおり運用で回避する(コード対応はしない)。
@@ -175,7 +294,8 @@ spec 末尾に以下の形式で追記する(値は実測で埋める):
 cd /home/tech/dev/ghq/github.com/kukv/dotfiles
 git add docs/superpowers/specs/2026-10-15-mise-bootstrap-migration-design.md
 git commit -m "docs: mise bootstrap の挙動検証結果を記録"
-rm -rf /tmp/claude-1000/spike /tmp/claude-1000/spike.git /tmp/claude-1000/spike-co
+# コンテナを初期状態に戻す(スパイクの残骸を消す)
+docker compose -f tests/docker/compose.yaml down && docker compose -f tests/docker/compose.yaml up -d --build dev
 ```
 
 ---
@@ -224,7 +344,8 @@ echo "== work module flips use_1password"
 
 - [ ] **Step 2: 失敗を確認する**
 
-Run: `chmod +x tests/bootstrap/plan.sh && tests/bootstrap/plan.sh`
+Run(ホスト): `chmod +x tests/bootstrap/plan.sh`
+Run(コンテナ): `tests/docker/exec.sh 'tests/bootstrap/plan.sh'`
 Expected: FAIL(`mise.toml` が無いので vars が見つからない / `use_1password` が空)
 
 - [ ] **Step 3: 骨格ファイルを作る**
@@ -289,7 +410,7 @@ use_1password = "false"
 
 - [ ] **Step 4: テストが通ることを確認する**
 
-Run: `tests/bootstrap/plan.sh`
+Run(コンテナ): `tests/docker/exec.sh 'tests/bootstrap/plan.sh'`
 Expected: 3 つの `== plan` が全て成功し、最後の 2 つの比較が通って exit 0
 
 - [ ] **Step 5: CI ジョブを追加する**
@@ -395,7 +516,8 @@ echo "PASS"
 
 - [ ] **Step 2: 失敗を確認する**
 
-Run: `chmod +x tests/bootstrap/chezmoi-apply.test.sh && tests/bootstrap/chezmoi-apply.test.sh`
+Run(ホスト): `chmod +x tests/bootstrap/chezmoi-apply.test.sh`
+Run(コンテナ): `tests/docker/exec.sh 'tests/bootstrap/chezmoi-apply.test.sh'`
 Expected: FAIL(`bootstrap/chezmoi-apply.sh: not found`)
 
 - [ ] **Step 3: 実装する**
@@ -444,7 +566,8 @@ exec mise exec chezmoi@latest -- chezmoi apply --force ${CHEZMOI_APPLY_ARGS:-}
 
 - [ ] **Step 4: テストが通ることを確認する**
 
-Run: `chmod +x bootstrap/chezmoi-apply.sh && tests/bootstrap/chezmoi-apply.test.sh`
+Run(ホスト): `chmod +x bootstrap/chezmoi-apply.sh`
+Run(コンテナ): `tests/docker/exec.sh 'tests/bootstrap/chezmoi-apply.test.sh'`
 Expected: `PASS`
 
 - [ ] **Step 5: hook を追加する**
@@ -461,8 +584,8 @@ run = "GIT_NAME='{{ vars.git_name }}' GIT_EMAIL='{{ vars.git_email }}' USE_1PASS
 
 - [ ] **Step 6: dry-run で展開を確認する**
 
-Run: `git_name=ci git_email=ci@example.com mise -E wsl,work bootstrap --dry-run --only tools 2>&1 | grep chezmoi-apply`
-Expected: `GIT_NAME='ci'`、`USE_1PASSWORD='false'`、`'<repo>/bootstrap/chezmoi-apply.sh' '<repo>'` が展開された 1 行が表示される。
+Run(コンテナ): `tests/docker/exec.sh 'git_name=ci git_email=ci@example.com mise -E wsl,work bootstrap --dry-run --only tools 2>&1 | grep chezmoi-apply'`
+Expected: `GIT_NAME='ci'`、`USE_1PASSWORD='false'`、`'/dotfiles/bootstrap/chezmoi-apply.sh' '/dotfiles'` が展開された 1 行が表示される。
 
 - [ ] **Step 7: CI にテストを追加して Commit**
 
@@ -505,7 +628,7 @@ if [ "$(uname -s)" = Linux ]; then
 fi
 ```
 
-Run: `tests/bootstrap/plan.sh`
+Run(コンテナ): `tests/docker/exec.sh 'tests/bootstrap/plan.sh'`
 Expected: `FAIL: plan lacks apt:language-pack-ja`
 
 - [ ] **Step 2: linux-base.sh を書く**
@@ -607,8 +730,21 @@ run = "'{{ config_root }}/bootstrap/linux-base.sh'"
 
 - [ ] **Step 4: テストと shellcheck を通す**
 
-Run: `chmod +x bootstrap/linux-base.sh && shellcheck bootstrap/*.sh && tests/bootstrap/plan.sh`
-Expected: exit 0。plan の出力で、このマシンに既にある apt パッケージが `installed`、DNS drop-in が `create` になっていること。
+Run(ホスト): `chmod +x bootstrap/linux-base.sh`
+Run(コンテナ): `tests/docker/exec.sh 'shellcheck bootstrap/*.sh && tests/bootstrap/plan.sh'`
+Expected: exit 0。
+
+- [ ] **Step 4b: コンテナに実際に適用して結果を確かめる**
+
+Run(コンテナ):
+
+```bash
+tests/docker/exec.sh 'git_name=ci git_email=ci@example.com mise bootstrap --yes --only packages,files,services,user'
+tests/docker/exec.sh 'locale -a | grep -i ja_JP.utf8; grep LANG /etc/default/locale; timedatectl show -p Timezone --value; resolvectl dns | head -3; getent passwd tech | cut -d: -f7'
+tests/docker/exec.sh 'git_name=ci git_email=ci@example.com mise bootstrap --yes --only packages,files,services,user'   # 2 回目
+```
+
+Expected: 1 回目が exit 0。確認コマンドで `ja_JP.utf8`、`LANG=ja_JP.UTF-8`、`Asia/Tokyo`、`8.8.8.8 1.1.1.1` を含む行、`/usr/bin/zsh`。2 回目は変更なしで exit 0(冪等)。
 
 - [ ] **Step 5: Commit**
 
@@ -638,7 +774,7 @@ if [ "$(uname -s)" = Linux ]; then
 fi
 ```
 
-Run: `tests/bootstrap/plan.sh`
+Run(コンテナ): `tests/docker/exec.sh 'tests/bootstrap/plan.sh'`
 Expected: `FAIL: wsl.conf missing`
 
 - [ ] **Step 2: wsl-base.sh を書く**
@@ -653,8 +789,9 @@ set -eu
 # drops one reply, so pointing resolv.conf at external servers stalls every
 # lookup for 5s. Use the local systemd-resolved stub instead.
 # ([bootstrap.files] cannot create symlinks.)
+# Skipped in the Docker test container, where Docker bind-mounts resolv.conf.
 stub="../run/systemd/resolve/stub-resolv.conf"
-if [ "$(readlink /etc/resolv.conf 2>/dev/null || true)" != "$stub" ]; then
+if [ ! -f /.dockerenv ] && [ "$(readlink /etc/resolv.conf 2>/dev/null || true)" != "$stub" ]; then
   sudo ln -sfn "$stub" /etc/resolv.conf
 fi
 
@@ -695,8 +832,19 @@ run = "'{{ config_root }}/bootstrap/wsl-base.sh'"
 
 - [ ] **Step 4: テストを通す**
 
-Run: `chmod +x bootstrap/wsl-base.sh && shellcheck bootstrap/*.sh && tests/bootstrap/plan.sh && mise -E wsl bootstrap --dry-run 2>&1 | grep -E 'linux-base|wsl-base'`
+Run(ホスト): `chmod +x bootstrap/wsl-base.sh`
+Run(コンテナ): `tests/docker/exec.sh 'shellcheck bootstrap/*.sh && tests/bootstrap/plan.sh && git_name=ci git_email=ci@example.com mise -E wsl bootstrap --dry-run 2>&1 | grep -E "linux-base|wsl-base"'`
 Expected: exit 0、dry-run に `linux-base.sh` と `wsl-base.sh` の両方が出る。
+
+- [ ] **Step 4b: コンテナに適用する**
+
+Run(コンテナ):
+
+```bash
+tests/docker/exec.sh 'git_name=ci git_email=ci@example.com mise -E wsl bootstrap --yes --only packages,files && cat /etc/wsl.conf'
+```
+
+Expected: exit 0、`/etc/wsl.conf` の内容が表示される。resolv.conf の symlink は `/.dockerenv` によりスキップされる(実機確認は Task 12)。
 
 - [ ] **Step 5: Commit**
 
@@ -728,7 +876,7 @@ if [ "$(uname -s)" = Darwin ]; then
 fi
 ```
 
-Run(Mac または macos CI runner): `tests/bootstrap/plan.sh`
+Run: macos CI runner(Mac 実機での確認は別計画)。この時点では push せず、Step 4 でまとめて確認してよい。
 Expected: `FAIL: plan lacks brew:mise`
 
 - [ ] **Step 2: macos-brew.sh を書く**
@@ -810,9 +958,10 @@ run = "'{{ config_root }}/bootstrap/macos-brew.sh'"
 
 - [ ] **Step 4: テストを通す**
 
-Run(Mac): `chmod +x bootstrap/macos-brew.sh && tests/bootstrap/plan.sh`
-Expected: exit 0。plan で既存の formulae / casks / mas が `installed` と出ること(`missing` が出たら名前の誤りを疑う)。
-Mac が手元に無い場合は push して macos CI runner の結果で確認する。
+Run(ホスト): `chmod +x bootstrap/macos-brew.sh`
+Run(コンテナ): `tests/docker/exec.sh 'shellcheck bootstrap/*.sh && tests/bootstrap/plan.sh'`(Linux 側が壊れていないこと)
+macOS 側は Task 10 Step 6 の push 後、macos CI runner の `bootstrap` ジョブで確認する。Mac 実機での `plan` / 適用確認は別計画で行う。
+Expected: コンテナで exit 0。CI の macos ジョブで plan.sh が exit 0。
 
 - [ ] **Step 5: Commit**
 
@@ -839,7 +988,7 @@ echo "== bootstrap task is defined"
 mise tasks ls 2>/dev/null | grep -q '^bootstrap' || { echo "FAIL: bootstrap task missing" >&2; exit 1; }
 ```
 
-Run: `tests/bootstrap/plan.sh`
+Run(コンテナ): `tests/docker/exec.sh 'tests/bootstrap/plan.sh'`
 Expected: `FAIL: bootstrap task missing`
 
 - [ ] **Step 2: post-tools.sh を書く**
@@ -905,8 +1054,24 @@ run = ["'{{ config_root }}/bootstrap/post-tools.sh'"]
 
 - [ ] **Step 4: テストと単体実行で確認する**
 
-Run: `chmod +x bootstrap/post-tools.sh && shellcheck bootstrap/*.sh && tests/bootstrap/plan.sh && mise run bootstrap`
-Expected: plan.sh が exit 0。`mise run bootstrap` は既存マシンでは導入済みのため何もインストールせず exit 0(このマシンの herdr プラグインと skills は Ansible で導入済み)。
+Run(ホスト): `chmod +x bootstrap/post-tools.sh`
+Run(コンテナ): `tests/docker/exec.sh 'shellcheck bootstrap/*.sh && tests/bootstrap/plan.sh'`
+Expected: exit 0
+
+- [ ] **Step 4b: コンテナで bootstrap 全体を初めて通す**
+
+chezmoi で `~/.config/mise/config.toml` が配置され、全ツールが入るので時間がかかる(数十分)。
+
+Run(コンテナ):
+
+```bash
+tests/docker/exec.sh 'git_name=ci git_email=ci@example.com mise -E wsl bootstrap --yes'
+tests/docker/exec.sh 'ls ~/.config/herdr/plugins/github/; ls ~/.claude/skills/; command -v claude; grep -c "name = ci" ~/.gitconfig'
+tests/docker/exec.sh 'git_name=ci git_email=ci@example.com mise -E wsl bootstrap --yes'   # 2 回目
+```
+
+Expected: 1 回目 exit 0。herdr プラグイン 4 つ、skills 5 つ(+ chezmoi が置く hunk-review)、`claude` のパス、`1` が表示される。2 回目はインストールが走らず exit 0。
+★Q5 が「同じ実行では tools が入らない」だった場合、1 回目で tools が入らず task が失敗するので、Step 3 の注記どおり `mise install` を task の先頭に足してから再実行する。
 
 - [ ] **Step 5: Commit**
 
@@ -941,7 +1106,7 @@ esac
 echo "$out" | grep -q "$want" || { echo "FAIL: plan lacks $want" >&2; exit 1; }
 ```
 
-Run: `tests/bootstrap/plan.sh`
+Run(コンテナ): `tests/docker/exec.sh 'tests/bootstrap/plan.sh'`
 Expected: `FAIL: plan lacks mise-bootstrap-weekly`
 
 - [ ] **Step 2: scheduled-run.sh を書く**
@@ -1017,8 +1182,21 @@ start_calendar_interval = [{ weekday = 0, hour = 21, minute = 0 }]
 
 - [ ] **Step 5: テストを通す**
 
-Run: `chmod +x bootstrap/scheduled-run.sh && shellcheck bootstrap/*.sh && tests/bootstrap/plan.sh`
+Run(ホスト): `chmod +x bootstrap/scheduled-run.sh`
+Run(コンテナ): `tests/docker/exec.sh 'shellcheck bootstrap/*.sh && tests/bootstrap/plan.sh'`
 Expected: exit 0
+
+- [ ] **Step 5b: コンテナで timer と linger を確かめる**
+
+Run(コンテナ):
+
+```bash
+tests/docker/exec.sh 'git_name=ci git_email=ci@example.com mise bootstrap --yes --only linux-systemd-units,user'
+tests/docker/exec.sh 'loginctl show-user tech -p Linger --value; systemctl --user list-timers | grep mise-bootstrap; systemctl --user cat dev.mise.mise-bootstrap.service | grep ExecStart'
+```
+
+Expected: `yes`、timer の行、`ExecStart=…/.local/share/mise/bootstrap-repo/bootstrap/scheduled-run.sh`。
+(timer の実行そのものは `--from` のチェックアウトが前提なので Task 11 で確認する。)
 
 - [ ] **Step 6: Commit**
 
@@ -1049,11 +1227,10 @@ git commit -m "feat(bootstrap): 週次の定期実行を systemd user timer / La
           if grep -q 'os-setup' "$DEST/.zshrc"; then echo 'os-setup reference left in zshrc' >&2; exit 1; fi
 ```
 
-ローカルで同等の確認:
+コンテナで同等の確認:
 
 ```bash
-mise exec chezmoi@latest -- chezmoi --source "$PWD" --config /dev/null \
-  execute-template < home/dot_zprofile.tmpl | grep -q linuxbrew && echo "FAIL (expected before fix)"
+tests/docker/exec.sh 'mise exec chezmoi@latest -- chezmoi --source /dotfiles --config /dev/null execute-template < home/dot_zprofile.tmpl | grep -q linuxbrew && echo "FAIL (expected before fix)"'
 ```
 
 Expected: `FAIL (expected before fix)`
@@ -1115,7 +1292,7 @@ alias update_os='systemctl --user start dev.mise.mise-bootstrap.service'
 
 - [ ] **Step 4: 確認する**
 
-Run: `tests/bootstrap/chezmoi-apply.test.sh` と Step 1 のローカル確認コマンド
+Run(コンテナ): `tests/docker/exec.sh 'tests/bootstrap/chezmoi-apply.test.sh'` と Step 1 のコンテナ確認コマンド
 Expected: テストは `PASS`、ローカル確認は何も出力しない(linuxbrew が消えた)
 
 - [ ] **Step 5: Commit**
@@ -1163,7 +1340,8 @@ sh "$repo/bootstrap/init.sh" --bogus >/dev/null 2>&1 && fail "unknown option mus
 echo PASS
 ```
 
-Run: `chmod +x tests/bootstrap/init.test.sh && tests/bootstrap/init.test.sh`
+Run(ホスト): `chmod +x tests/bootstrap/init.test.sh`
+Run(コンテナ): `tests/docker/exec.sh 'tests/bootstrap/init.test.sh'`
 Expected: FAIL(init.sh が無い)
 
 - [ ] **Step 2: init.sh を書く**
@@ -1256,10 +1434,11 @@ run "$MISE" trust "$HOME/.local/share/mise/bootstrap-repo"
 
 - [ ] **Step 3: テストを通す**
 
-Run: `chmod +x bootstrap/init.sh && shellcheck bootstrap/init.sh && tests/bootstrap/init.test.sh`
+Run(ホスト): `chmod +x bootstrap/init.sh`
+Run(コンテナ): `tests/docker/exec.sh 'shellcheck bootstrap/init.sh && tests/bootstrap/init.test.sh'`
 Expected: `PASS`
 
-注: Linux で `sudo test -f` が走るため、INIT_DRY_RUN でも sudo パスワードを聞かれることがある(NOPASSWD 設定済みのマシンでは聞かれない)。CI では runner が NOPASSWD なので問題ない。
+注: Linux では INIT_DRY_RUN でも `sudo test -f` が走る。コンテナと CI runner は NOPASSWD なので問題ない。
 
 - [ ] **Step 4: README を更新する**
 
@@ -1318,57 +1497,70 @@ Expected: `apply` と `bootstrap` の全マトリクスが成功。失敗した�
 
 ---
 
-### Task 11: ゼロ構築の検証(新しい WSL ディストロ)【ユーザー操作あり】
+### Task 11: ゼロ構築の検証(Docker の素の Ubuntu で init.sh から)
 
 **Files:** なし(検証のみ。結果は spec の「検証結果」節に追記)
 
-- [ ] **Step 1: 使い捨てディストロを作る(Windows 側の PowerShell で、ユーザーが実行)**
+前提: Task 10 Step 6 で `migration` ブランチが push 済み。
 
-```powershell
-wsl --install Ubuntu --name mise-test
-```
+- [ ] **Step 1: 素のコンテナを起動する**
 
-初回起動でユーザー `tech` を作成する(uid 1000)。
-
-- [ ] **Step 2: init.sh を migration ブランチで流す(mise-test 内)**
+Run(ホスト):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/kukv/dotfiles/migration/bootstrap/init.sh | sh -s -- --env wsl --branch migration
+docker compose -f tests/docker/compose.yaml down
+docker compose -f tests/docker/compose.yaml up -d --build e2e
+tests/docker/exec.sh -s e2e 'command -v mise git || echo "clean"'
 ```
 
-Expected: git name / email を聞かれ、最後まで exit 0。
+Expected: `clean`(mise も git も無い)
+
+- [ ] **Step 2: init.sh を migration ブランチで流す**
+
+Run(ホスト、対話あり):
+
+```bash
+tests/docker/exec.sh -s e2e 'curl -fsSL https://raw.githubusercontent.com/kukv/dotfiles/migration/bootstrap/init.sh | sh -s -- --env wsl,work --branch migration'
+```
+
+Expected: git name / email を聞かれ(テスト用の値を入力)、最後まで exit 0。全ツールを入れるので数十分かかる。
+`--env wsl,work` で、全 module が載った最も重い組み合わせを通す。
 
 - [ ] **Step 3: 成功条件を確認する**
 
+Run(コンテナ):
+
 ```bash
-mise bootstrap status            # 全項目 applied / installed / unchanged
-mise exec chezmoi@latest -- chezmoi diff   # 空
-systemctl --user list-timers | grep mise-bootstrap
-systemctl --user start dev.mise.mise-bootstrap.service && journalctl --user -u dev.mise.mise-bootstrap -n 20
-getent passwd "$USER" | cut -d: -f7   # /usr/bin/zsh
-readlink /etc/resolv.conf            # ../run/systemd/resolve/stub-resolv.conf
+tests/docker/exec.sh -s e2e 'mise bootstrap status'
+tests/docker/exec.sh -s e2e 'mise exec chezmoi@latest -- chezmoi diff; echo "diff-exit=$?"'
+tests/docker/exec.sh -s e2e 'grep -E "allowedSignersFile|op-ssh-sign" ~/.gitconfig; mise vars use_1password'
+tests/docker/exec.sh -s e2e 'getent passwd tech | cut -d: -f7; systemctl --user list-timers | grep mise-bootstrap'
+tests/docker/exec.sh -s e2e 'systemctl --user start dev.mise.mise-bootstrap.service; journalctl --user -u dev.mise.mise-bootstrap -n 20 --no-pager'
 ```
 
-Expected: 各コメントのとおり。`wsl --terminate mise-test` → 再起動後も `systemctl --user` が使え、DNS が引けること。
+Expected:
+- status が全項目 applied / installed / unchanged
+- chezmoi diff の出力が空で `diff-exit=0`
+- gitconfig に `allowedSignersFile`(work module により 1Password 無し)、`false`
+- `/usr/bin/zsh`、timer の行
+- 手動起動した定期実行が `--update` を含めて成功している(ログ末尾にエラーが無い)
 
 - [ ] **Step 4: 片付けと記録**
 
-```powershell
-wsl --unregister mise-test
-```
-
-結果(問題と対処)を spec の「検証結果」節に追記してコミット:
-
 ```bash
+docker compose -f tests/docker/compose.yaml down
 git add docs/superpowers/specs/2026-10-15-mise-bootstrap-migration-design.md
-git commit -m "docs: 新規 WSL でのゼロ構築検証結果を記録"
+git commit -m "docs: Docker でのゼロ構築検証結果を記録"
 ```
+
+結果(問題と対処)は commit 前に spec の「検証結果」節へ追記する。
 
 ---
 
 ### Task 12: 既存マシンの移行(個人 WSL → Mac → 会社 WSL)【ユーザー操作あり】
 
 マシンごとに以下を実施する。各マシンでユーザーの確認を取ってから始める。
+**Mac は別計画の動作確認が完了してから実施する**(手順は以下の Mac 向け記述に従う)。全 3 台が終わるまで Task 13 に進まない。
 
 - [ ] **Step 1: 移行前の状態を保存する**
 
@@ -1451,6 +1643,16 @@ update_os   # 新しいシェルで。Linux は journalctl --user -u dev.mise.mi
 ```
 
 Expected: status 全一致、chezmoi diff 空、diff は `update_os` 行と zprofile の linuxbrew 行だけ。
+
+WSL のみ、Docker では確認できなかった項目をここで確認する:
+
+```bash
+readlink /etc/resolv.conf            # ../run/systemd/resolve/stub-resolv.conf
+getent hosts github.com              # 即座に返る(5 秒待たされない)
+alias ssh                            # ssh='ssh.exe'
+```
+
+PowerShell で `wsl --shutdown` → 再度開いて、`systemctl --user list-timers | grep mise-bootstrap` が出ること。
 
 - [ ] **Step 8: 後片付け**
 
