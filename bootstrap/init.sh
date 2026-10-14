@@ -38,7 +38,7 @@ run() {
 # Under `curl | sh` stdin is the script itself. Interactive steps (Homebrew, --prompt-vars)
 # get the terminal instead; a plain `exec </dev/tty` would make sh read the rest of the script from it.
 run_tty() {
-  if [ -z "${INIT_DRY_RUN:-}" ] && [ ! -t 0 ] && [ -r /dev/tty ]; then
+  if [ -z "${INIT_DRY_RUN:-}" ] && [ ! -t 0 ] && ( : </dev/tty ) 2>/dev/null; then
     "$@" </dev/tty
   else
     run "$@"
