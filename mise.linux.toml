@@ -69,3 +69,22 @@ login_shell = "/usr/bin/zsh"
 # ==========================================================================
 [bootstrap.hooks.post-packages]
 run = "'{{ config_root }}/bootstrap/linux-base.sh'"
+
+# ==========================================================================
+# scheduled re-provisioning (weekly)
+# ==========================================================================
+[bootstrap.linux.systemd.units.mise-bootstrap]
+description = "Re-apply kukv/dotfiles mise bootstrap"
+type = "oneshot"
+exec_start = "~/.local/share/mise/bootstrap-repo/bootstrap/scheduled-run.sh"
+start = false
+wanted_by = []
+
+[bootstrap.linux.systemd.units.mise-bootstrap-weekly]
+on_calendar = "weekly"
+persistent = true
+unit = "mise-bootstrap"
+
+# Keep the user manager (and the timer) running while logged out.
+[bootstrap.hooks.post-user]
+run = "loginctl show-user \"$USER\" -p Linger --value | grep -qx yes || sudo loginctl enable-linger \"$USER\""

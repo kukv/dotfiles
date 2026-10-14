@@ -49,3 +49,12 @@ fi
 
 echo "== bootstrap task is defined"
 mise tasks ls 2>/dev/null | grep -q '^bootstrap' || { echo "FAIL: bootstrap task missing" >&2; exit 1; }
+
+echo "== scheduler is declared"
+# `bootstrap plan` does not cover systemd user units / LaunchAgents, so assert
+# the declarations through the merged config instead.
+case "$(uname -s)" in
+  Linux)  key=bootstrap.linux.systemd.units.mise-bootstrap-weekly.on_calendar ;;
+  Darwin) key=bootstrap.macos.launchd.agents.mise-bootstrap.program ;;
+esac
+mise config get "$key" >/dev/null 2>&1 || { echo "FAIL: config lacks $key" >&2; exit 1; }

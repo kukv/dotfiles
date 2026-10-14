@@ -50,3 +50,10 @@
 # ==========================================================================
 [bootstrap.hooks.post-packages]
 run = "'{{ config_root }}/bootstrap/macos-brew.sh'"
+
+# ==========================================================================
+# scheduled re-provisioning (Sundays 21:00)
+# ==========================================================================
+[bootstrap.macos.launchd.agents.mise-bootstrap]
+program = "~/.local/share/mise/bootstrap-repo/bootstrap/scheduled-run.sh"
+start_calendar_interval = [{ weekday = 0, hour = 21, minute = 0 }]
