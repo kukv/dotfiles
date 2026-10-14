@@ -17,7 +17,7 @@ done
 # octoscope tool) and official.browser (deprecated upstream) no longer ship a
 # plugin manifest and cannot be installed.
 while read -r id repo; do
-  herdr plugin list 2>/dev/null | grep -q "^- $id " || herdr plugin install "$repo" --yes </dev/null
+  herdr plugin list 2>/dev/null </dev/null | grep -q "^- $id " || herdr plugin install "$repo" --yes </dev/null
 done <<'EOT'
 herdr-file-viewer smarzban/herdr-file-viewer
 hunk.diff edmundmiller/herdr-plugin-hunk

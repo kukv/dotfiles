@@ -19,3 +19,7 @@ mode = "0644"
 
 [bootstrap.hooks.post-packages]
 run = "'{{ config_root }}/bootstrap/wsl-base.sh'"
+
+# After files + services: dns.conf is written and systemd-resolved restarted by then.
+[bootstrap.hooks.pre-repos]
+run = "'{{ config_root }}/bootstrap/wsl-resolv.sh'"

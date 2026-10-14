@@ -8,8 +8,13 @@ case "$svc" in
   dev) workdir=/dotfiles ;;
   *)   workdir=/home/tech ;;
 esac
+# e2e keeps the container's default PATH so it reproduces a fresh machine.
+path_env=
+if [ "$svc" = dev ]; then
+  path_env=-ePATH=/home/tech/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+fi
 exec docker compose -f "$(cd "$(dirname "$0")" && pwd)/compose.yaml" exec \
   -u tech -w "$workdir" \
   -e XDG_RUNTIME_DIR=/run/user/1000 \
-  -e PATH=/home/tech/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+  ${path_env:+"$path_env"} \
   "$svc" bash -lc "$1"

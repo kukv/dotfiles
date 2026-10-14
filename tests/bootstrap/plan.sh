@@ -26,6 +26,7 @@ if [ "$(uname -s)" = Linux ]; then
   echo "== linux declarations are present"
   out="$(mise bootstrap plan 2>&1)"
   for want in apt:language-pack-ja apt:zsh apt:libssl-dev apt:qemu-system-arm \
+              apt:build-essential apt:systemd-resolved \
               /etc/systemd/resolved.conf.d/dns.conf systemd-resolved; do
     echo "$out" | grep -q "$want" || { echo "FAIL: plan lacks $want" >&2; exit 1; }
   done

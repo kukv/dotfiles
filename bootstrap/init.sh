@@ -58,6 +58,11 @@ case "$(uname -s)" in
     MISE=/opt/homebrew/bin/mise
     ;;
   Linux)
+    # systemd must be PID 1 (timezone, resolved, user units). Skipped in dry-run tests.
+    if [ -z "${INIT_DRY_RUN:-}" ] && [ ! -d /run/systemd/system ]; then
+      echo "systemd is not running. Set [boot] systemd=true in /etc/wsl.conf, run 'wsl --shutdown' from Windows, then re-run init.sh." >&2
+      exit 1
+    fi
     # Scheduled runs use sudo for apt and /etc; they cannot answer a password prompt.
     sudoers="/etc/sudoers.d/$(id -un)"
     if ! sudo test -f "$sudoers"; then
@@ -85,5 +90,9 @@ if [ ! -f "$HOME/.local/etc/bootstrap.env" ]; then
   (umask 077 && : > "$HOME/.local/etc/bootstrap.env")
 fi
 chmod 600 "$HOME/.local/etc/bootstrap.env"
+
+# Hooks (chezmoi-apply.sh's `mise exec`) look up mise on PATH, which a fresh machine does not have yet.
+PATH="$(dirname "$MISE"):$PATH"
+export PATH
 
 run_tty "$MISE" bootstrap --from "$REPO_URL?ref=$BRANCH" --prompt-vars

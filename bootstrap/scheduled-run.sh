@@ -22,7 +22,7 @@ if [ "$(uname -s)" = Darwin ]; then
   exec >>"$log_dir/$(date +%Y%m%d).log" 2>&1
 else
   # Linux installs mise with mise.run; macOS updates it through Homebrew.
-  mise self-update --yes
+  mise self-update --yes || echo "mise self-update failed; continuing" >&2
 fi
 
 exec mise bootstrap --from https://github.com/kukv/dotfiles.git --update --yes

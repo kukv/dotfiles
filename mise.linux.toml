@@ -7,6 +7,7 @@
 # base
 "apt:acl" = "latest"
 "apt:apt-transport-https" = "latest"
+"apt:build-essential" = "latest"
 "apt:bzip2" = "latest"
 "apt:ca-certificates" = "latest"
 "apt:curl" = "latest"
@@ -15,6 +16,7 @@
 "apt:lsb-release" = "latest"
 "apt:software-properties-common" = "latest"
 "apt:sshpass" = "latest"
+"apt:systemd-resolved" = "latest"
 "apt:tree" = "latest"
 "apt:unzip" = "latest"
 "apt:zip" = "latest"
