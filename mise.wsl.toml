@@ -1,6 +1,7 @@
 # Module "wsl": select with env = ["wsl"] in ~/.config/mise/miserc.local.toml on WSL machines.
 
 [bootstrap.files."/etc/wsl.conf"]
+os = "linux"
 content = """
 # Managed by mise bootstrap (kukv/dotfiles). Restart WSL (wsl --shutdown) after changes.
 [boot]

@@ -56,6 +56,7 @@ GitHub token は `~/.local/etc/bootstrap.env`(0600)に `MISE_GITHUB_TOKEN=…` /
 
 ### 再適用
 週次で自動実行されます(Linux: systemd user timer、macOS: LaunchAgent)。手動では `update_os`。
+チェックアウト外から `mise bootstrap --from ...` を手で実行する場合は `MISE_AUTO_ENV=true` が必要です(`.miserc.toml` の `auto_env` は cwd がチェックアウトのときだけ効くため。`update_os` なら不要)。
 
 ---
 

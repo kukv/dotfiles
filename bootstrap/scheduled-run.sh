@@ -4,6 +4,8 @@
 # the `update_os` alias. Neither scheduler gives us the login shell's PATH.
 set -eu
 export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
+# cwd is not the checkout, so its .miserc.toml (auto_env) is not read; platform files need this.
+export MISE_AUTO_ENV=true
 
 # Secrets (MISE_GITHUB_TOKEN, HOMEBREW_GITHUB_API_TOKEN) via the environment,
 # never argv.

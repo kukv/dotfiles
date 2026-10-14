@@ -223,7 +223,7 @@ os-setup は README に移転先を書いてアーカイブする(アーカイ�
 
 | # | 確認事項 | 結果 | 採用した方式 |
 |---|---|---|---|
-| Q1 | `.miserc.toml` の `auto_env` で platform ファイルが読まれる | 読まれる。`mise vars probe_platform` が `linux`(`mise.linux.toml`)。 | `.miserc.toml` に `auto_env = true`。`MISE_AUTO_ENV` の export は不要 |
+| Q1 | `.miserc.toml` の `auto_env` で platform ファイルが読まれる | cwd がチェックアウトなら読まれる(`probe_platform` が `linux`)。cwd が別の場所の `--from` では読まれない。 | `.miserc.toml` に `auto_env = true`(cwd がチェックアウトのときだけ有効)。`--from` を別ディレクトリから実行する場合は `MISE_AUTO_ENV=true` が必要なので init.sh / scheduled-run.sh で export |
 | Q2 | グローバル `miserc.local.toml` の `env` がプロジェクト module を選ぶ | 選ぶ。`env = ["wsl"]` で `probe_module` が `wsl`(`mise.wsl.toml`)になり、platform ファイルも併せて読まれる。 | `~/.config/mise/miserc.local.toml` の `env`。`-E` 明示は不要 |
 | Q3 | hook で `vars.*` / `config_root` が展開される。pre-dotfiles hook の有無 | 展開される(`vars=base root=/tmp/spike`)。`[dotfiles]` 未宣言でも pre-dotfiles hook は実行される(`--only dotfiles,tools` の dry-run で表示)。 | pre-tools hook を使う |
 | Q4 | 同名の環境変数で var を上書きできる(変数名の形式) | 上書きできる。`probe_base=ci mise vars probe_base` が `ci`。`MISE_VAR_probe_base=ci` は効かない(`base` のまま)。 | var 名そのままの環境変数(`<name>=<value>`) |

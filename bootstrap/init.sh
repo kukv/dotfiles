@@ -95,4 +95,7 @@ chmod 600 "$HOME/.local/etc/bootstrap.env"
 PATH="$(dirname "$MISE"):$PATH"
 export PATH
 
+# cwd is not the checkout, so its .miserc.toml (auto_env) is not read; platform files need this.
+export MISE_AUTO_ENV=true
+
 run_tty "$MISE" bootstrap --from "$REPO_URL?ref=$BRANCH" --prompt-vars

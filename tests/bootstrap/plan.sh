@@ -9,7 +9,9 @@ mise trust .
 # over saved answers, so this never touches this machine's real answers.
 export git_name=ci git_email=ci@example.com
 
-for envs in "" "wsl" "wsl,work"; do
+# macOS never selects the wsl module.
+if [ "$(uname -s)" = Linux ]; then set -- "" wsl wsl,work; else set -- ""; fi
+for envs in "$@"; do
   echo "== plan (env: ${envs:-none})"
   if [ -n "$envs" ]; then
     mise -E "$envs" bootstrap plan

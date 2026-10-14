@@ -128,9 +128,7 @@ jobs:
 
       - name: shellcheck bootstrap scripts
         if: runner.os == 'Linux'
-        run: |
-          files=$(git ls-files 'bootstrap/*.sh' 'tests/bootstrap/*.sh')
-          [ -z "$files" ] || shellcheck $files
+        run: git ls-files -z 'bootstrap/*.sh' 'tests/bootstrap/*.sh' | xargs -0 -r shellcheck
 
       - name: mise bootstrap plan (every machine selection)
         run: tests/bootstrap/plan.sh
