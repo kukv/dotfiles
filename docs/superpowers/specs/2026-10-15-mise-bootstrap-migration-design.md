@@ -231,12 +231,12 @@ os-setup は README に移転先を書いてアーカイブする(アーカイ�
 | Q6 | `--from` チェックアウトで trust を求められない | bootstrap 実行中は求められない(未 trust のままでも hook 展開・tools まで進む)。ただし実行後も `mise trust --show` は untrusted で、そのチェックアウトで素の `mise` コマンドを実行すると "not trusted" エラーになる。ref 付き `?ref=main` は `git clone` の後に `git checkout main --` で実行される。`--from` の URL とチェックアウトの origin は文字列一致が必要(`/tmp/x.git` と `file:///tmp/x.git` は不一致でエラー)。 | bootstrap 後に素の mise を使うなら `mise trust <checkout>` を挟む。origin の表記は `--from` と揃える |
 | Q7 | dirty なチェックアウトで `--update` が止まる | 一律には止まらない。`git pull` の fast-forward が dirty なファイルと衝突しない場合は成功(変更は保持)、同じファイルが上流で変わっていると git がエラーで中断し `bootstrap from repository failed`(終了コード 1)。`--update` なしでは dirty でも問題なく進む。`--dry-run --update` は fast-forward しない。 | 運用で回避(チェックアウトを dirty にしない)。コード対応なし |
 
-### Task 11 E2E(Docker 素の Ubuntu、`init.sh --env wsl,work --branch migration`、HEAD a3b7772)
+### Task 11 E2E(Docker 素の Ubuntu、`init.sh --env wsl,work --branch migration`、HEAD c9d2a0e)
 
-結果: **不合格(プロダクトのバグ 1 件)**。init.sh は exit 0(約 7 分)だが、初回実行で Linux 固有の宣言が適用されなかった。
+結果: **合格**。1 回目の実行で `--from` を checkout 外の cwd から実行すると `.miserc.toml` の auto_env が効かず Linux 固有宣言が適用されないバグを検出し、`MISE_AUTO_ENV=true` を init.sh / scheduled-run.sh で export する修正(edecdce)を入れた。以下は修正後の再実行結果。
 
-- 通った: e2e コンテナは mise / git 無しで起動。init.sh は exit 0。`chezmoi diff` は空(`diff-exit=0`)。gitconfig に `allowedSignersFile`(`op-ssh-sign` 無し)。`use_1password` は `false`(mise.work.toml)。tools 77 件は全て installed。
-- 失敗(バグ): `--from` 経由の初回実行(cwd が `~`)では、チェックアウト内の `.miserc.toml`(`auto_env = true`)が読まれず、`miserc.local.toml` の `env = ["wsl","work"]` だけが効く。その結果 `mise.linux.toml` が読まれず、apt packages 27 件・`/etc/systemd/resolved.conf.d/dns.conf`・systemd-resolved・linux-base.sh(locale/timezone/linger)・systemd user unit(timer)・login shell(`/usr/bin/zsh`)が全て未適用のまま終了した。`--dry-run` で再現: cwd `~` の `mise bootstrap --from ...` は linux-base.sh を含まず、チェックアウト内で実行すると含む。spike Q1/Q2 はチェックアウト内で確認していたため見落としていた。`scheduled-run.sh` も同じ cwd 依存の呼び出し(`mise bootstrap --from ... --update`)なので同様に影響する可能性がある。
-- 切り分け: チェックアウトで `mise bootstrap --yes` を再実行すると全て適用され、`status` は全項目 installed / unchanged / set、timer も有効になった。`systemctl --user start dev.mise.mise-bootstrap.service` は `Result=success`、`ExecMainStatus=0`。
-- 環境由来: init 中に chezmoi のバージョン取得が github API で 3 秒タイムアウトの WARN(無害)。Step 3 の `mise bootstrap status` は cwd がチェックアウトでないと tools しか表示されない(同じ原因)。
-- 未修正。修正案は `init.sh` の miserc.local.toml に `auto_env` 相当(`env` に `linux` を含める等)か、`mise bootstrap` をチェックアウトへ cd して実行すること。コントローラの判断待ち。
+- e2e コンテナは mise / git 無しで起動。init.sh は exit 0(約 7 分)。PATH の追加は init 実行側では行っていない。
+- `mise bootstrap status`(checkout で `MISE_AUTO_ENV=true`)は exit 0、`status --missing` も exit 0。apt packages(build-essential / language-pack-ja / bind9-dnsutils)installed、`/etc/systemd/resolved.conf.d/dns.conf` あり、tools 77 件 installed。
+- `chezmoi diff` は空(`diff-exit=0`)。gitconfig に `allowedSignersFile`。login shell は `/usr/bin/zsh`。
+- timer `dev.mise.mise-bootstrap-weekly.timer` が active(次回 月曜 00:00)。`dev.mise.mise-bootstrap.service` を手動起動し `Result=success` / `ExecMainStatus=0`、journal にエラー無し(`--update` 経路)。
+- 環境由来: Docker では resolv.conf の symlink は設計上スキップされる。
