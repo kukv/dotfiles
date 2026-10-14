@@ -46,3 +46,6 @@ if [ "$(uname -s)" = Darwin ]; then
     echo "$out" | grep -q "$want" || { echo "FAIL: plan lacks $want" >&2; exit 1; }
   done
 fi
+
+echo "== bootstrap task is defined"
+mise tasks ls 2>/dev/null | grep -q '^bootstrap' || { echo "FAIL: bootstrap task missing" >&2; exit 1; }

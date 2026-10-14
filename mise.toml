@@ -27,3 +27,10 @@ default = ""
 # ==========================================================================
 [bootstrap.hooks.pre-tools]
 run = "GIT_NAME='{{ vars.git_name }}' GIT_EMAIL='{{ vars.git_email }}' USE_1PASSWORD='{{ vars.use_1password }}' GIT_SIGNING_KEY_FILE='{{ vars.git_signing_key_file }}' '{{ config_root }}/bootstrap/chezmoi-apply.sh' '{{ config_root }}'"
+
+# ==========================================================================
+# bootstrap task (runs last in `mise bootstrap`, with [tools] on PATH)
+# ==========================================================================
+[tasks.bootstrap]
+description = "Post-tools setup: corepack, herdr plugins, Claude skills, Claude Code"
+run = ["'{{ config_root }}/bootstrap/post-tools.sh'"]
