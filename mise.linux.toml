@@ -84,7 +84,3 @@ wanted_by = []
 on_calendar = "weekly"
 persistent = true
 unit = "mise-bootstrap"
-
-# Keep the user manager (and the timer) running while logged out.
-[bootstrap.hooks.post-user]
-run = "loginctl show-user \"$USER\" -p Linger --value | grep -qx yes || sudo loginctl enable-linger \"$USER\""
