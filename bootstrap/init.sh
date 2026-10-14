@@ -21,8 +21,10 @@ USAGE
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --env) ENVS="$2"; shift 2 ;;
-    --branch) BRANCH="$2"; shift 2 ;;
+    --env|--branch)
+      if [ $# -lt 2 ]; then echo "Option $1 needs a value" >&2; usage >&2; exit 1; fi
+      if [ "$1" = "--env" ]; then ENVS="$2"; else BRANCH="$2"; fi
+      shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown option: $1" >&2; usage >&2; exit 1 ;;
   esac
@@ -33,6 +35,16 @@ run() {
   if [ -n "${INIT_DRY_RUN:-}" ]; then echo "$*"; else "$@"; fi
 }
 
+# Under `curl | sh` stdin is the script itself. Interactive steps (Homebrew, --prompt-vars)
+# get the terminal instead; a plain `exec </dev/tty` would make sh read the rest of the script from it.
+run_tty() {
+  if [ -z "${INIT_DRY_RUN:-}" ] && [ ! -t 0 ] && [ -r /dev/tty ]; then
+    "$@" </dev/tty
+  else
+    run "$@"
+  fi
+}
+
 case "$(uname -s)" in
   Darwin)
     if ! xcode-select -p >/dev/null 2>&1; then
@@ -40,7 +52,7 @@ case "$(uname -s)" in
       exit 1
     fi
     if [ ! -x /opt/homebrew/bin/brew ]; then
-      run /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+      run_tty /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     fi
     run /opt/homebrew/bin/brew install mise
     MISE=/opt/homebrew/bin/mise
@@ -72,5 +84,6 @@ mkdir -p "$HOME/.local/etc"
 if [ ! -f "$HOME/.local/etc/bootstrap.env" ]; then
   (umask 077 && : > "$HOME/.local/etc/bootstrap.env")
 fi
+chmod 600 "$HOME/.local/etc/bootstrap.env"
 
-run "$MISE" bootstrap --from "$REPO_URL?ref=$BRANCH" --prompt-vars
+run_tty "$MISE" bootstrap --from "$REPO_URL?ref=$BRANCH" --prompt-vars
