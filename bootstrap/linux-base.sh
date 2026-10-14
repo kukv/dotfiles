@@ -17,7 +17,11 @@ fi
 
 # Keep the user manager (and the mise-bootstrap timer) running while logged out.
 # Done here, before the systemd-units step, so a fresh machine gets the timer in one run.
-user="$(id -un)"
-if [ "$(loginctl show-user "$user" -p Linger --value 2>/dev/null)" != "yes" ]; then
-  sudo loginctl enable-linger "$user"
+# Skipped when systemd is not PID 1 (e.g. WSL before the restart that applies wsl.conf);
+# the next run after the restart enables it.
+if [ -d /run/systemd/system ]; then
+  user="$(id -un)"
+  if [ "$(loginctl show-user "$user" -p Linger --value 2>/dev/null)" != "yes" ]; then
+    sudo loginctl enable-linger "$user"
+  fi
 fi
