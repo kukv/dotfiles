@@ -1531,7 +1531,7 @@ Expected: git name / email を聞かれ(テスト用の値を入力)、最後ま
 Run(コンテナ):
 
 ```bash
-tests/docker/exec.sh -s e2e 'mise bootstrap status'
+tests/docker/exec.sh -s e2e '(cd ~/.local/share/mise/bootstrap-repo && MISE_AUTO_ENV=true mise bootstrap status)'
 tests/docker/exec.sh -s e2e 'mise exec chezmoi@latest -- chezmoi diff; echo "diff-exit=$?"'
 tests/docker/exec.sh -s e2e 'grep -E "allowedSignersFile|op-ssh-sign" ~/.gitconfig; mise vars use_1password'
 tests/docker/exec.sh -s e2e 'getent passwd tech | cut -d: -f7; systemctl --user list-timers | grep mise-bootstrap'
@@ -1626,8 +1626,8 @@ sudo rm -rf /home/linuxbrew
 m="$(command -v mise || echo ~/.local/bin/mise)"
 co=~/.local/share/mise/bootstrap-repo
 git clone -b migration https://github.com/kukv/dotfiles.git "$co"
-(cd "$co" && "$m" trust . && "$m" bootstrap plan && "$m" bootstrap --dry-run)
-"$m" bootstrap --from "https://github.com/kukv/dotfiles.git"
+(cd "$co" && MISE_AUTO_ENV=true "$m" trust . && MISE_AUTO_ENV=true "$m" bootstrap plan && MISE_AUTO_ENV=true "$m" bootstrap --dry-run)
+MISE_AUTO_ENV=true "$m" bootstrap --from "https://github.com/kukv/dotfiles.git"
 ```
 
 Expected: plan / dry-run で、想定外の削除や上書きが無いことをユーザーと確認してから最終行で適用する。
@@ -1635,7 +1635,7 @@ Expected: plan / dry-run で、想定外の削除や上書きが無いことを�
 - [ ] **Step 7: 成功条件を確認する**
 
 ```bash
-mise bootstrap status
+(cd ~/.local/share/mise/bootstrap-repo && MISE_AUTO_ENV=true mise bootstrap status)
 mise exec chezmoi@latest -- chezmoi diff
 for f in .gitconfig .zshrc .zprofile; do diff "$b/$f" ~/"$f"; done
 [ -f "$b/ssh_config" ] && diff "$b/ssh_config" ~/.ssh/config
@@ -1694,7 +1694,7 @@ co=~/.local/share/mise/bootstrap-repo
 rm -rf "$co"
 git clone https://github.com/kukv/dotfiles.git "$co"   # main
 mise trust "$co"
-mise bootstrap --from https://github.com/kukv/dotfiles.git
+MISE_AUTO_ENV=true mise bootstrap --from https://github.com/kukv/dotfiles.git
 ```
 
 - [ ] **Step 3: os-setup をアーカイブする(ユーザー確認の上で実施)**
