@@ -1,1 +1,21 @@
 # Module "wsl": select with env = ["wsl"] in ~/.config/mise/miserc.local.toml on WSL machines.
+
+[bootstrap.files."/etc/wsl.conf"]
+content = """
+# Managed by mise bootstrap (kukv/dotfiles). Restart WSL (wsl --shutdown) after changes.
+[boot]
+systemd=true
+
+[network]
+generateResolvConf=false
+hostname=wsl2
+
+[automount]
+options="metadata,uid=1000,gid=1000,umask=22,fmask=11"
+"""
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.hooks.post-packages]
+run = "'{{ config_root }}/bootstrap/wsl-base.sh'"

@@ -32,3 +32,9 @@ if [ "$(uname -s)" = Linux ]; then
   # plan does not cover the login shell; status does (as "user login_shell")
   mise bootstrap status 2>&1 | grep -q 'login_shell' || { echo "FAIL: status lacks login_shell" >&2; exit 1; }
 fi
+
+if [ "$(uname -s)" = Linux ]; then
+  echo "== wsl module declarations are present only with -E wsl"
+  mise -E wsl bootstrap plan 2>&1 | grep -q /etc/wsl.conf || { echo "FAIL: wsl.conf missing" >&2; exit 1; }
+  ! mise bootstrap plan 2>&1 | grep -q /etc/wsl.conf || { echo "FAIL: wsl.conf leaked into base" >&2; exit 1; }
+fi
