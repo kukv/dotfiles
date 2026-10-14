@@ -3,9 +3,6 @@
 [chezmoi](https://www.chezmoi.io/) で管理する個人 dotfiles です。
 WSL (Linux) と macOS で共有し、OS 固有の差分は `.tmpl` の `.chezmoi.os` 分岐で吸収します。
 
-通常は [`kukv/os-setup`](https://github.com/kukv/os-setup) のプロビジョニングから
-自動的に適用されます。
-
 ---
 
 ## リポジトリ構成
@@ -39,16 +36,26 @@ chezmoi の命名規則: `dot_` → `.`、`private_` → 権限 `0600`、`create
 
 ## 適用方法
 
-### 自動（推奨）
-`kukv/os-setup` の Ansible 実行が `chezmoi init --apply kukv/dotfiles` を行います。
-git identity は os-setup が `~/.config/chezmoi/chezmoi.toml` に注入します。
-
-### 手動（単体で使う場合）
+### 新しいマシン
 ```bash
-chezmoi init --apply https://github.com/kukv/dotfiles.git
+# macOS
+curl -fsSL https://raw.githubusercontent.com/kukv/dotfiles/main/bootstrap/init.sh | sh
+# 個人 WSL
+curl -fsSL https://raw.githubusercontent.com/kukv/dotfiles/main/bootstrap/init.sh | sh -s -- --env wsl
+# 会社 WSL
+curl -fsSL https://raw.githubusercontent.com/kukv/dotfiles/main/bootstrap/init.sh | sh -s -- --env wsl,work
 ```
-`.chezmoiroot` は自動で解釈されます。git identity（`user.name` / `user.email` / 署名鍵）は
-chezmoi data として要求され、未設定なら初回に prompt されます。
+mise を導入し、`mise bootstrap --from kukv/dotfiles` で OS 設定・パッケージ・dotfiles(chezmoi)・ツールを適用します。
+初回に git の name / email を聞かれます(`~/.local/state/mise/vars.toml` に保存)。WSL は適用後に `wsl --shutdown` で再起動してください。
+GitHub token は `~/.local/etc/bootstrap.env`(0600)に `MISE_GITHUB_TOKEN=…` / `HOMEBREW_GITHUB_API_TOKEN=…` として置きます。
+
+### 構成
+- `mise.toml`(全マシン共通)/ `mise.linux.toml`・`mise.macos.toml`(OS 別、自動で読まれる)
+- `mise.wsl.toml`・`mise.work.toml`(module。`~/.config/mise/miserc.local.toml` の `env` で選ぶ)
+- `bootstrap/`(init と hook 用スクリプト)、`home/`(chezmoi ソース)
+
+### 再適用
+週次で自動実行されます(Linux: systemd user timer、macOS: LaunchAgent)。手動では `update_os`。
 
 ---
 

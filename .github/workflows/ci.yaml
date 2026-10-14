@@ -137,3 +137,6 @@ jobs:
 
       - name: chezmoi-apply.sh
         run: tests/bootstrap/chezmoi-apply.test.sh
+
+      - name: init.sh
+        run: tests/bootstrap/init.test.sh
