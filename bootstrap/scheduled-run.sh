@@ -27,4 +27,4 @@ else
   mise self-update --yes || echo "mise self-update failed; continuing" >&2
 fi
 
-exec mise bootstrap --from https://github.com/kukv/dotfiles.git --update --yes
+exec mise bootstrap --from https://github.com/kukv/dotfiles.git --from-dir "$HOME/.local/share/dotfiles" --update --yes

@@ -73,11 +73,11 @@ MISE_GITHUB_TOKEN=<token>
 HOMEBREW_GITHUB_API_TOKEN=<token>
 ```
 
-git の name / email を確認して保存する。
+git の name / email を確認し、`mise vars prompt` の質問に表示された値を入力する。
 
 ```bash
 grep -E 'git_name|git_email' ~/.config/chezmoi/chezmoi.toml
-~/.local/bin/mise vars git_name=kukv git_email=koki-nonaka@outlook.jp
+~/.local/bin/mise vars prompt
 ```
 
 **会社 WSL**: 署名鍵を既定(`~/.ssh/git_signing_key.pub`)以外に置いている場合だけ、`~/.local/bin/mise vars git_signing_key_file=<パス>` も実行する。
@@ -108,8 +108,8 @@ sudo rm -rf /home/linuxbrew
 (origin URL が `--from` の URL と一致すれば、mise はそのチェックアウトを使う)。
 
 ```bash
-git clone -b migration https://github.com/kukv/dotfiles.git ~/.local/share/mise/bootstrap-repo
-cd ~/.local/share/mise/bootstrap-repo
+git clone -b migration https://github.com/kukv/dotfiles.git ~/.local/share/dotfiles
+cd ~/.local/share/dotfiles
 MISE_AUTO_ENV=true ~/.local/bin/mise trust .
 MISE_AUTO_ENV=true ~/.local/bin/mise bootstrap plan
 MISE_AUTO_ENV=true ~/.local/bin/mise bootstrap --dry-run
@@ -119,7 +119,7 @@ MISE_AUTO_ENV=true ~/.local/bin/mise bootstrap --dry-run
 
 ```bash
 cd ~
-MISE_AUTO_ENV=true ~/.local/bin/mise bootstrap --from https://github.com/kukv/dotfiles.git
+MISE_AUTO_ENV=true ~/.local/bin/mise bootstrap --from https://github.com/kukv/dotfiles.git --from-dir ~/.local/share/dotfiles
 ```
 
 ## 7. 成功条件を確認する
@@ -127,7 +127,7 @@ MISE_AUTO_ENV=true ~/.local/bin/mise bootstrap --from https://github.com/kukv/do
 新しいシェルを開いて実行する。
 
 ```bash
-cd ~/.local/share/mise/bootstrap-repo && MISE_AUTO_ENV=true mise bootstrap status; cd ~
+cd ~/.local/share/dotfiles && MISE_AUTO_ENV=true mise bootstrap status; cd ~
 mise exec chezmoi@latest -- chezmoi diff; echo "diff-exit=$?"
 diff ~/migration-backup/.gitconfig ~/.gitconfig
 diff ~/migration-backup/.zshrc ~/.zshrc
@@ -179,3 +179,30 @@ rm -f ~/.local/etc/extra_vars.yaml ~/.local/etc/os-setup.env
 
 WSL の `/etc/systemd/resolved.conf` に Ansible の `# BEGIN DNS SETUP` ブロックが残るが、drop-in と同じ値なので無害。消す場合は手で削除する。
 問題が無ければ `~/migration-backup` も削除してよい。
+
+## 9. main へのマージ後
+
+`--from` は既存チェックアウトのブランチを切り替えないので、`-b migration` で clone したマシンは手で main に切り替える
+(そのままだと週次実行が migration ブランチを追い続ける)。
+
+```bash
+git -C ~/.local/share/dotfiles fetch --prune
+git -C ~/.local/share/dotfiles switch main
+git -C ~/.local/share/dotfiles branch -D migration
+```
+
+## 旧パス(`~/.local/share/mise/bootstrap-repo`)で移行済みのマシン
+
+チェックアウトを `~/.local/share/dotfiles` に移して再適用する。
+
+```bash
+mise trust --untrust ~/.local/share/mise/bootstrap-repo
+mv ~/.local/share/mise/bootstrap-repo ~/.local/share/dotfiles
+git -C ~/.local/share/dotfiles pull --ff-only
+cd ~/.local/share/dotfiles
+MISE_AUTO_ENV=true mise trust .
+cd ~
+MISE_AUTO_ENV=true mise bootstrap --from https://github.com/kukv/dotfiles.git --from-dir ~/.local/share/dotfiles
+```
+
+確認は 7 と同じ(`bootstrap status` の systemd / LaunchAgent が新パスを指していること)。

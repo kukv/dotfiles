@@ -78,7 +78,7 @@ run = "'{{ config_root }}/bootstrap/linux-base.sh'"
 [bootstrap.linux.systemd.units.mise-bootstrap]
 description = "Re-apply kukv/dotfiles mise bootstrap"
 type = "oneshot"
-exec_start = "~/.local/share/mise/bootstrap-repo/bootstrap/scheduled-run.sh"
+exec_start = "~/.local/share/dotfiles/bootstrap/scheduled-run.sh"
 start = false
 wanted_by = []
 
