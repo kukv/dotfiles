@@ -1,0 +1,232 @@
+# Managed by mise [dotfiles] — edit home/dot_zshrc.tera in kukv/dotfiles
+# Machine-local, untracked overrides go in ~/.zshrc.local
+
+# ==========================================================================
+# = mise
+# ==========================================================================
+# Before sheldon below: sheldon is installed as a mise tool.
+eval "$(mise activate zsh)"
+
+# ==========================================================================
+# = Shell options (oh-my-zsh is not used; these replace what its lib set)
+# ==========================================================================
+setopt auto_cd auto_pushd pushd_ignore_dups pushdminus
+setopt share_history hist_expire_dups_first hist_ignore_dups hist_ignore_space hist_verify
+setopt interactive_comments multios long_list_jobs
+setopt auto_menu complete_in_word always_to_end
+unsetopt menu_complete flowcontrol
+
+# ==========================================================================
+# = Colors
+# ==========================================================================
+if ls --color -d . >/dev/null 2>&1; then
+    (( $+commands[dircolors] )) && eval "$(dircolors -b)"
+    alias ls='ls --color=tty'
+else
+    export CLICOLOR=1
+    alias ls='ls -G'
+fi
+alias grep='grep --color=auto'
+
+# ==========================================================================
+# = Completion (compinit itself runs in sheldon, after zsh-completions)
+# ==========================================================================
+zstyle ':completion:*:*:*:*:*' menu select
+zstyle ':completion:*' matcher-list 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' 'r:|=*' 'l:|=* r:|=*'
+zstyle ':completion:*' special-dirs true
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+zstyle ':completion:*' use-cache yes
+zstyle ':completion:*' cache-path "${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
+
+# ==========================================================================
+# = Key bindings
+# ==========================================================================
+# Explicit: zsh picks vi mode when EDITOR/VISUAL contains "vi".
+bindkey -e
+autoload -Uz up-line-or-beginning-search down-line-or-beginning-search edit-command-line
+zle -N up-line-or-beginning-search
+zle -N down-line-or-beginning-search
+zle -N edit-command-line
+# Up/Down: search history for lines starting with what is typed (normal and application cursor modes).
+bindkey '^[[A' up-line-or-beginning-search
+bindkey '^[OA' up-line-or-beginning-search
+bindkey '^[[B' down-line-or-beginning-search
+bindkey '^[OB' down-line-or-beginning-search
+bindkey '^[[H' beginning-of-line
+bindkey '^[OH' beginning-of-line
+bindkey '^[[F' end-of-line
+bindkey '^[OF' end-of-line
+bindkey '^[[1~' beginning-of-line
+bindkey '^[[4~' end-of-line
+bindkey '^[[3~' delete-char
+bindkey '^[[1;5C' forward-word
+bindkey '^[[1;5D' backward-word
+bindkey '^[[Z' reverse-menu-complete
+bindkey '^X^E' edit-command-line
+# Quote URLs as they are typed or pasted.
+autoload -Uz bracketed-paste-magic url-quote-magic
+zle -N bracketed-paste bracketed-paste-magic
+zle -N self-insert url-quote-magic
+
+# ==========================================================================
+# = Terminal title: "user@host: dir" at the prompt, the command while it runs
+# ==========================================================================
+autoload -Uz add-zsh-hook
+_title_precmd() { [[ $TERM == dumb ]] || print -Pn '\e]0;%n@%m: %~\a' }
+_title_preexec() { [[ $TERM == dumb ]] || print -rn -- $'\e]0;'"$1"$'\a' }
+add-zsh-hook precmd _title_precmd
+add-zsh-hook preexec _title_preexec
+
+# ==========================================================================
+# = Directory aliases
+# ==========================================================================
+alias -g ...='../..'
+alias -g ....='../../..'
+alias -g .....='../../../..'
+alias -g ......='../../../../..'
+alias -- -='cd -'
+alias 1='cd -1'
+alias 2='cd -2'
+alias 3='cd -3'
+alias 4='cd -4'
+alias 5='cd -5'
+alias 6='cd -6'
+alias 7='cd -7'
+alias 8='cd -8'
+alias 9='cd -9'
+alias md='mkdir -p'
+alias rd=rmdir
+
+# ==========================================================================
+# = git aliases (same definitions as oh-my-zsh's git plugin; only these)
+# ==========================================================================
+alias g='git'
+alias gst='git status'
+alias ga='git add'
+alias gaa='git add --all'
+alias gc='git commit --verbose'
+alias gd='git diff'
+alias gds='git diff --staged'
+alias gb='git branch'
+alias gco='git checkout'
+alias gsw='git switch'
+alias gswc='git switch --create'
+alias gf='git fetch'
+alias gl='git pull'
+alias gp='git push'
+alias grb='git rebase'
+alias glog='git log --oneline --decorate --graph'
+alias gsta='git stash push'
+alias gstp='git stash pop'
+
+# ==========================================================================
+# = alien theme (read when sheldon loads it)
+# ==========================================================================
+export ALIEN_SECTIONS_LEFT=(
+    time
+    user
+    path
+    ssh
+    venv
+    vcs_branch:async
+    vcs_status:async
+    vcs_dirty:async
+    exit
+    newline
+    prompt
+)
+export ALIEN_SECTION_TIME_FORMAT="%Y-%m-%d %H:%M:%S"
+export ALIEN_SECTION_USER_HOST=1
+export ALIEN_THEME="blue"
+{%- if os() == "macos" %}
+export ALIEN_USE_NERD_FONT=1
+{%- endif %}
+
+# ==========================================================================
+# = zsh plugins (sheldon: ~/.config/sheldon/plugins.toml)
+# ==========================================================================
+if (( $+commands[sheldon] )); then eval "$(sheldon source)"; else autoload -Uz compinit && compinit; fi
+{% if os() == "macos" %}
+{%- if vars.use_1password == "true" %}
+# ==========================================================================
+# = 1Password SSH agent (macOS)
+# ==========================================================================
+export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
+{% endif %}
+# ==========================================================================
+# = Docker completions (macOS)
+# ==========================================================================
+fpath=(${HOME}/.docker/completions $fpath)
+{%- endif %}
+
+# ==========================================================================
+# = peco
+# ==========================================================================
+function peco-select-history() {
+    local tac
+    if which tac > /dev/null; then
+        tac="tac"
+    else
+        tac="tail -r"
+    fi
+    BUFFER=$(\history -n 1 | \
+        eval $tac | \
+        peco --query "$LBUFFER")
+    CURSOR=$#BUFFER
+    zle clear-screen
+}
+zle -N peco-select-history
+bindkey '^r' peco-select-history
+
+function peco-src() {
+    local selected_dir=$(ghq list -p | peco --prompt="repositories >" --query "$LBUFFER")
+    if [ -n "$selected_dir" ]; then
+        BUFFER="cd '${selected_dir}'"
+        zle accept-line
+    fi
+    zle clear-screen
+}
+zle -N peco-src
+bindkey '^]' peco-src
+
+# ==========================================================================
+# = aliases
+# ==========================================================================
+alias ll='ls -alF'
+alias la='ls -A'
+alias l='ls -CF'
+alias history='history -f'
+alias relogin='exec $SHELL -l'
+alias reload='source ~/.zshrc'
+alias cls='clear'
+alias cdh='cd ~'
+alias v='nvim'
+alias cc='claude'
+alias ccw='claude -w'
+{%- if os() == "macos" %}
+# provision this machine now (mise bootstrap; log: ~/.local/log/mise-bootstrap/)
+alias update_os='~/.local/share/dotfiles/bootstrap/scheduled-run.sh'
+{%- elif os() == "linux" %}
+# provision this machine now (mise bootstrap user unit; log: journalctl --user -u dev.mise.mise-bootstrap)
+alias update_os='systemctl --user start dev.mise.mise-bootstrap.service'
+{%- endif %}
+{%- if vars.is_wsl == "true" %}
+
+# WSL only: route ssh through the Windows host (1Password lives on the Windows side).
+alias ssh='ssh.exe'
+alias ssh-add='ssh-add.exe'
+alias scp='scp.exe'
+{%- endif %}
+
+# ==========================================================================
+# = Zsh history
+# ==========================================================================
+HISTSIZE=1000
+SAVEHIST=2000
+HISTFILE=$HOME/.zsh_history
+setopt extended_history
+
+# ==========================================================================
+# = Machine-local overrides (untracked)
+# ==========================================================================
+[ -f ~/.zshrc.local ] && source ~/.zshrc.local

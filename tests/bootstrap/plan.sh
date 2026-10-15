@@ -24,6 +24,10 @@ echo "== work module flips use_1password"
 [ "$(mise -E wsl,work vars use_1password)" = "false" ]
 [ "$(mise vars use_1password)" = "true" ]
 
+echo "== wsl module sets is_wsl"
+[ "$(mise -E wsl vars is_wsl)" = "true" ]
+[ "$(mise vars is_wsl)" = "false" ]
+
 if [ "$(uname -s)" = Linux ]; then
   echo "== linux declarations are present"
   out="$(mise bootstrap plan 2>&1)"
@@ -45,7 +49,7 @@ fi
 if [ "$(uname -s)" = Darwin ]; then
   echo "== macos declarations are present"
   out="$(mise bootstrap plan 2>&1)"
-  for want in brew:mise brew:mas brew-cask:1password brew-cask:docker-desktop mas:497799835; do
+  for want in brew:mise brew-cask:1password brew-cask:docker-desktop; do
     echo "$out" | grep -q "$want" || { echo "FAIL: plan lacks $want" >&2; exit 1; }
   done
 fi

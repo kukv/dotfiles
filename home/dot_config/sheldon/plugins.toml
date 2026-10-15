@@ -1,0 +1,31 @@
+# Managed by mise [dotfiles] — edit home/dot_config/sheldon/plugins.toml in kukv/dotfiles.
+# Plugins load in this order. Versions are pinned; renovate tracks them (see renovate.json).
+shell = "zsh"
+
+# Its plugin file adds src/ to fpath, so it must come before compinit.
+[plugins.zsh-completions]
+github = "zsh-users/zsh-completions"
+tag = "0.36.0"
+
+# After zsh-completions joins fpath. bashcompinit lets bash-only completion scripts work.
+[plugins.compinit]
+inline = 'autoload -Uz compinit && compinit && autoload -Uz bashcompinit && bashcompinit'
+
+# Theme. Its libs/ are git submodules, which sheldon clones recursively.
+[plugins.alien]
+github = "eendroroy/alien"
+tag = "2.1.2"
+use = ["alien.zsh"]
+
+[plugins.zsh-autosuggestions]
+github = "zsh-users/zsh-autosuggestions"
+tag = "v0.7.1"
+
+[plugins.zsh-history-substring-search]
+github = "zsh-users/zsh-history-substring-search"
+tag = "v1.1.0"
+
+# Must be loaded last.
+[plugins.zsh-syntax-highlighting]
+github = "zsh-users/zsh-syntax-highlighting"
+tag = "0.8.0"

@@ -1,38 +1,27 @@
 # dotfiles
 
-[chezmoi](https://www.chezmoi.io/) で管理する個人 dotfiles です。
-WSL (Linux) と macOS で共有し、OS 固有の差分は `.tmpl` の `.chezmoi.os` 分岐で吸収します。
+[mise](https://mise.jdx.dev/) の bootstrap で管理する個人 dotfiles です。
+WSL (Linux) と macOS で共有し、差分は mise の platform ファイル・module と、テンプレート(Tera)の分岐で吸収します。
 
 ---
 
 ## リポジトリ構成
 
-chezmoi 管理のソースは `.chezmoiroot` により **`home/` 配下**に集約しています。
-リポジトリのルートにはメタ情報（README / CI / renovate 設定）だけが並びます。
-
 ```
 dotfiles/
-├── .chezmoiroot              # 中身は "home"（ソースルートを home/ に指定）
-├── README.md
-├── renovate.json
-├── .github/workflows/ci.yaml # ubuntu/macOS で chezmoi apply を検証
-└── home/                     # ← chezmoi のソースルート
-    ├── .chezmoi.toml.tmpl        # chezmoi data（git identity）の取得定義
-    ├── .chezmoiexternal.toml     # 外部依存（oh-my-zsh / プラグイン）
-    ├── .chezmoiignore            # OS 別に無視するファイル
-    ├── dot_zshrc.tmpl            # → ~/.zshrc
-    ├── dot_zprofile.tmpl         # → ~/.zprofile
-    ├── dot_gitconfig.tmpl        # → ~/.gitconfig
-    ├── create_dot_zshrc.local    # → ~/.zshrc.local（初回のみ生成）
-    ├── create_dot_zprofile.local # → ~/.zprofile.local（初回のみ生成）
-    ├── dot_config/{mise,nvim,herdr}/ # → ~/.config/mise, ~/.config/nvim, ~/.config/herdr
-    ├── private_dot_ssh/          # → ~/.ssh（macOS のみ）
-    └── Library/                  # → ~/Library（macOS iTerm2 プロファイル）
+├── .miserc.toml              # auto_env(platform ファイルを読む)
+├── mise.toml                 # 全マシン共通: vars / [dotfiles] / hooks / bootstrap task
+├── mise.linux.toml           # Linux(自動で読まれる)
+├── mise.macos.toml           # macOS(自動で読まれる)
+├── mise.wsl.toml             # module: WSL(is_wsl、wsl.conf など)
+├── mise.work.toml            # module: 会社 PC(use_1password = false)
+├── bootstrap/                # init.sh と hook / 定期実行用スクリプト
+├── home/                     # ~ に配置するファイル(直下の dot_ は ~ の . に対応。*.tera はテンプレート)
+├── tests/                    # bootstrap / dotfiles / zsh のテストと Docker 環境
+└── docs/
 ```
 
-chezmoi の命名規則: `dot_` → `.`、`private_` → 権限 `0600`、`create_` → 既存があれば上書きしない、`.tmpl` → テンプレート。
-
----
+配置先と方式は `mise.toml` の `[dotfiles]` に書いてあります(copy / template。symlink は使いません)。
 
 ## 適用方法
 
@@ -45,20 +34,13 @@ curl -fsSL https://raw.githubusercontent.com/kukv/dotfiles/main/bootstrap/init.s
 # 会社 WSL
 curl -fsSL https://raw.githubusercontent.com/kukv/dotfiles/main/bootstrap/init.sh | sh -s -- --env wsl,work
 ```
-mise を導入し、`mise bootstrap --from kukv/dotfiles` で OS 設定・パッケージ・dotfiles(chezmoi)・ツールを適用します。
+mise を導入し、`mise bootstrap --from kukv/dotfiles` で OS 設定・パッケージ・dotfiles・ツールを適用します。
 初回に git の name / email を聞かれます(`~/.local/state/mise/vars.toml` に保存)。WSL は適用後に `wsl --shutdown` で再起動してください。
 GitHub token は `~/.local/etc/bootstrap.env`(0600)に `MISE_GITHUB_TOKEN=…` / `HOMEBREW_GITHUB_API_TOKEN=…` として置きます。
 
 詳しい手順は `docs/setup/` を参照してください。
 - [WSL 新規](docs/setup/wsl-new.md)
-- [WSL 移行(os-setup から)](docs/setup/wsl-migration.md)
 - [Mac 新規](docs/setup/mac-new.md)
-- [Mac 移行(os-setup から)](docs/setup/mac-migration.md)
-
-### 構成
-- `mise.toml`(全マシン共通)/ `mise.linux.toml`・`mise.macos.toml`(OS 別、自動で読まれる)
-- `mise.wsl.toml`・`mise.work.toml`(module。`~/.config/mise/miserc.local.toml` の `env` で選ぶ)
-- `bootstrap/`(init と hook 用スクリプト)、`home/`(chezmoi ソース)
 
 ### 再適用
 週次で自動実行されます(Linux: systemd user timer、macOS: LaunchAgent)。手動では `update_os`。
@@ -68,34 +50,45 @@ GitHub token は `~/.local/etc/bootstrap.env`(0600)に `MISE_GITHUB_TOKEN=…` /
 
 ## 編集
 
+開発用 clone(`ghq get kukv/dotfiles`)で `home/` と `mise.toml` を編集して push し、`update_os` で反映します。
+bootstrap 用チェックアウト(`~/.local/share/dotfiles`)は直接編集しません(未コミットの変更があると週次の更新が止まり得るため)。
+
+push 前に手元で試す場合は、開発用 clone で次を実行します(WSL は `-E wsl`、会社 PC は `-E wsl,work` を付ける):
+
 ```bash
-chezmoi edit ~/.zshrc   # ソース（home/dot_zshrc.tmpl）を編集
-chezmoi apply           # ~/ に反映
+mise trust .
+mise dot diff     # 反映される差分
+mise dot apply    # ~ に反映
 ```
+
+`~` 側のファイルを直接編集しても、次の適用で上書きされます。
 
 ---
 
 ## マシンローカル設定・秘密情報
 
 マシン固有の環境変数や秘密は `~/.zshrc.local` / `~/.zprofile.local` に置きます。
-これらは `create_` で**初回に一度だけ生成**され、以後 chezmoi が上書きせず、リポジトリにも追跡されません。
+bootstrap が**初回に一度だけ生成**し(`bootstrap/local-files.sh`)、以後は上書きせず、リポジトリにも追跡されません。
 
 ---
 
-## OS 分岐の仕組み
+## 差分の仕組み
 
-- `.tmpl` テンプレート内で `.chezmoi.os`（`linux` / `darwin`）により分岐
-  - 例: WSL は `alias ssh='ssh.exe'`、macOS は git の 1Password 署名や `~/.ssh/config`
-- 外部依存（oh-my-zsh 本体・zsh プラグイン・テーマ）は `home/.chezmoiexternal.toml` で取得
-  - バージョンは固定し、renovate が更新を追従します
+- テンプレート(`home/*.tera`、Tera)の中で分岐します
+  - `os()`(`linux` / `macos`): 例: macOS の git の 1Password 署名、Homebrew
+  - `vars.is_wsl`(wsl module): 例: WSL の `alias ssh='ssh.exe'`、`sshCommand = ssh.exe`
+  - `vars.use_1password`(work module で `false`): ローカル鍵での署名と `~/.ssh/allowed_signers`
+- macOS だけのファイルは `[dotfiles]` の `variants = [{ os = "macos" }]`
+- zsh のプラグイン(zsh-users の各プラグインと alien テーマ)は sheldon(`home/dot_config/sheldon/plugins.toml`)で取得します。版は固定し、renovate が追従します。oh-my-zsh は使わず、補完・キーバインド・履歴などの設定と git エイリアスは `home/dot_zshrc.tera` に直接書いています
 
 ---
 
 ## 収録物
 
-- `~/.zshrc` / `~/.zprofile`（OS 分岐）/ `~/.gitconfig`
-- `~/.config/mise/config.toml`（ツールバージョン定義）
-- `~/.config/nvim`（LazyVim、ベンダリング）
-- `~/.config/herdr/config.toml`（ターミナルワークスペースのキーバインド定義）
-- Oh-My-Zsh + プラグイン / テーマ（chezmoi externals、固定 + renovate 追従）
+- `~/.zshrc` / `~/.zprofile`(OS 分岐)/ `~/.gitconfig`
+- `~/.config/mise/config.toml`(ツールバージョン定義)
+- `~/.config/sheldon/plugins.toml`(zsh プラグイン)
+- `~/.config/nvim`(LazyVim、ベンダリング)
+- `~/.config/herdr/config.toml`(ターミナルワークスペースのキーバインド定義)
+- `~/.config/git/ignore`、`~/.claude`(CLAUDE.md / settings.json / スキル)、`~/.codex/config.toml`
 - macOS のみ: `~/.ssh/config`、iTerm2 の Dynamic Profile

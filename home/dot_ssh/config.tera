@@ -1,11 +1,8 @@
-# Managed by chezmoi — edit with: chezmoi edit ~/.ssh/config
-{{- /* use_1password is seeded by bootstrap/chezmoi-apply.sh; default to 1Password when absent (chezmoi runs missingkey=error) */ -}}
-{{- $op := true -}}
-{{- if hasKey . "use_1password" }}{{ $op = .use_1password }}{{ end -}}
-{{- if $op }}
+# Managed by mise [dotfiles] — edit home/dot_ssh/config.tera in kukv/dotfiles
+{%- if vars.use_1password == "true" %}
 
 Include ~/.ssh/1Password/config
-{{- end }}
+{%- endif %}
 
 Host github
   HostName github.com

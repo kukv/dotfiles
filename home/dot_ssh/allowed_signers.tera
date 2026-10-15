@@ -1,0 +1,8 @@
+{# Local-key machines only: verify our own commit signatures. Renders empty (and the
+   [dotfiles] entry's remove_empty deletes the file) on 1Password machines and until
+   the key file exists. #}
+{%- set key_file = vars.git_signing_key_file -%}
+{%- if key_file == "" -%}{%- set key_file = env.HOME ~ "/.ssh/git_signing_key.pub" -%}{%- endif -%}
+{%- if vars.use_1password != "true" and key_file is file -%}
+{{ vars.git_email }} {{ read_file(path=key_file) | trim }}
+{% endif -%}

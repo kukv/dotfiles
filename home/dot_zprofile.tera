@@ -1,8 +1,8 @@
-# Managed by chezmoi — edit with: chezmoi edit ~/.zprofile
+# Managed by mise [dotfiles] — edit home/dot_zprofile.tera in kukv/dotfiles
 # Machine-local, untracked overrides go in ~/.zprofile.local
 
 export PATH="$HOME/.local/bin:$PATH"
-{{ if eq .chezmoi.os "darwin" }}
+{% if os() == "macos" %}
 # ========================================================
 # = Homebrew (macOS)
 # ========================================================
@@ -22,12 +22,12 @@ export LC_ALL=en_US.UTF-8
 # = Build parallelization
 # ========================================================
 export JOBMAX=$(sysctl -n hw.logicalcpu)
-{{- else }}
+{%- else %}
 # ========================================================
 # = Build parallelization
 # ========================================================
 export JOBMAX=$(nproc)
-{{- end }}
+{%- endif %}
 export MAKEFLAGS="-j$JOBMAX"
 
 # ========================================================

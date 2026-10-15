@@ -1,7 +1,6 @@
 # WSL 新規セットアップ手順
 
 まっさらな WSL ディストリビューションに、この dotfiles の mise bootstrap を適用する手順。
-os-setup (Ansible) で構築済みの WSL は [wsl-migration.md](wsl-migration.md) を使う。
 
 - コマンドはそのまま貼れるように書いてある。シェル変数は使わない(シェルを開き直しても続きから実行できる)。
 - WSL 側のコマンドは自分のユーザーで実行する。root では実行せず、必要な箇所だけ sudo を使う。
@@ -83,8 +82,8 @@ wsl --shutdown
 WSL を開き直して実行する。
 
 ```bash
-cd ~/.local/share/dotfiles && MISE_AUTO_ENV=true mise bootstrap status; cd ~
-mise exec chezmoi@latest -- chezmoi diff; echo "diff-exit=$?"
+cd ~/.local/share/dotfiles && MISE_AUTO_ENV=true mise trust . && MISE_AUTO_ENV=true mise bootstrap status && MISE_AUTO_ENV=true mise dot status --missing; echo "dot-exit=$?"; cd ~
+zsh -ic 'alias gst; alias md'
 readlink /etc/resolv.conf
 getent hosts github.com
 zsh -ic 'alias ssh'
@@ -96,7 +95,8 @@ journalctl --user -u dev.mise.mise-bootstrap -n 30 --no-pager
 期待値:
 
 - `bootstrap status` が全項目 installed / unchanged / set
-- `diff-exit=0`
+- `dot-exit=0`
+- `alias gst` / `alias md` が表示され、zsh の起動でエラーが出ない
 - `readlink` が `../run/systemd/resolve/stub-resolv.conf`
 - `getent hosts github.com` が即座に返る(5 秒待たされない)
 - `alias ssh` が `ssh=ssh.exe`
