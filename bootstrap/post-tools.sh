@@ -50,6 +50,8 @@ find-skills vercel-labs/skills
 ax yusukebe/ax
 ast-grep ast-grep/agent-skill
 ast-grep-outline ast-grep/agent-skill
+natural-japanese coji/natural-japanese
+yomiyasu nanaism/yomiyasu
 EOT
 
 # Claude Code CLI (self-updating; install once).
