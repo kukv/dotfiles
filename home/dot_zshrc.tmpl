@@ -43,7 +43,7 @@ export ALIEN_THEME="blue"
 export ALIEN_USE_NERD_FONT=1
 {{- end }}
 {{ if eq .chezmoi.os "darwin" }}
-{{- /* use_1password may be injected by os-setup; default to 1Password when absent (chezmoi runs missingkey=error) */ -}}
+{{- /* use_1password is seeded by bootstrap/chezmoi-apply.sh; default to 1Password when absent (chezmoi runs missingkey=error) */ -}}
 {{- $op := true -}}
 {{- if hasKey . "use_1password" }}{{ $op = .use_1password }}{{ end -}}
 {{- if $op }}

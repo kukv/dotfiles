@@ -6,6 +6,8 @@
 experimental = true
 # .node-version 等の言語固有バージョンファイルを読まない (mise.toml で一元管理)
 idiomatic_version_file_enable_tools = []
+# token 無しの初回 bootstrap でも tools の版解決がタイムアウトしないよう延ばす (旧 Ansible role と同じ 60s)
+fetch_remote_versions_timeout = "60s"
 
 minimum_release_age_excludes = ["github:kukv/octoscope"]
 
@@ -13,7 +15,7 @@ minimum_release_age_excludes = ["github:kukv/octoscope"]
 # gh はトークンを keyring に置くため hosts.yml に oauth_token が無く、mise の gh 連携
 # (優先度 7) では取得できない。ドキュメント推奨どおり credential_command で取り出す。
 # https://mise.jdx.dev/dev-tools/github-tokens.html
-# ansible-pull 側は MISE_GITHUB_TOKEN (優先度 1) が勝つため、この設定は対話シェル用。
+# mise bootstrap の定期実行は bootstrap.env の MISE_GITHUB_TOKEN (優先度 1) が勝つため、この設定は対話シェル用。
 credential_command = "gh auth token"
 
 [settings.npm]
@@ -141,6 +143,8 @@ eza = "latest"
 bat = "latest"
 zoxide = "latest"
 ghq = "latest"
+# bootstrap の hook は `mise exec chezmoi@<固定版>` で別に実行する。こちらは手元の chezmoi edit / diff 用
+chezmoi = "latest"
 "github:kukv/octoscope" = "latest"
 
 # [tools.aws]

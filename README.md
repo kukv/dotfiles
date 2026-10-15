@@ -49,6 +49,11 @@ mise を導入し、`mise bootstrap --from kukv/dotfiles` で OS 設定・パッ
 初回に git の name / email を聞かれます(`~/.local/state/mise/vars.toml` に保存)。WSL は適用後に `wsl --shutdown` で再起動してください。
 GitHub token は `~/.local/etc/bootstrap.env`(0600)に `MISE_GITHUB_TOKEN=…` / `HOMEBREW_GITHUB_API_TOKEN=…` として置きます。
 
+詳しい手順は `docs/setup/` を参照してください。
+- [WSL 新規](docs/setup/wsl-new.md)
+- [WSL 移行(os-setup から)](docs/setup/wsl-migration.md)
+- [Mac](docs/setup/mac.md)(未整備)
+
 ### 構成
 - `mise.toml`(全マシン共通)/ `mise.linux.toml`・`mise.macos.toml`(OS 別、自動で読まれる)
 - `mise.wsl.toml`・`mise.work.toml`(module。`~/.config/mise/miserc.local.toml` の `env` で選ぶ)
