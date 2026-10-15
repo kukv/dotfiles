@@ -27,7 +27,7 @@ oh-my-zsh 一式を sheldon に置き換える。
 | アプリが書き換える設定(`~/.claude/settings.json`、`~/.codex/config.toml`) | 丸ごと上書き(copy) | 現状(`chezmoi apply --force`)と同じ挙動 |
 | WSL 判定 | wsl module の var `is_wsl`(既定 `"false"`、`mise.wsl.toml` で `"true"`) | `use_1password` と同じ仕組み。CI で `-E wsl` により WSL 分岐を検証できる |
 | `~/.zshrc.local` / `~/.zprofile.local`(chezmoi の `create_`) | post-dotfiles hook で「無ければ作る」 | `create_` と同じ挙動で、既存ファイルに触れない |
-| ソースの配置 | `home/` 配下に `~` と同じ実名で置き、テンプレートだけ `.tera` を付ける | 配置先との対応が見て分かる |
+| ソースの配置 | `home/` 直下の `.` 始まりの名前だけ `dot_` に置き換え(ディレクトリの中身はアプリ側の名前のまま)、テンプレートは `.tera` を付ける。`**/.ssh/**` 等の Claude の deny ルールや、mise / Claude Code が `home/.config` `home/.claude` を設定として拾うことを避ける。配置先との対応も見て分かる |
 | zsh 構成 | sheldon。oh-my-zsh は `lib/*.zsh` と `plugins/git` だけを sheldon で読む | ユーザー決定。操作感は維持し、oh-my-zsh のフレームワーク部分(`oh-my-zsh.sh`、自動更新)は使わない |
 | プラグインの版管理 | 全部固定 + renovate(zsh-users / alien は tag、oh-my-zsh は rev) | 全台が同じ版になり、壊れたら PR 単位で戻せる |
 | 展開順 | 2 段階。① Mac / 会社 WSL を今の main(chezmoi あり)で os-setup から移行 → ② 本ブランチで 3 台を移行してからマージ | 変更を 1 つずつ入れ、失敗時の切り分けと切り戻しを簡単にする |
@@ -64,17 +64,17 @@ oh-my-zsh 一式を sheldon に置き換える。
 
 ### 1. ファイル配置(mise `[dotfiles]`)
 
-`git mv` で `home/` を実名に並べ替える。
+`git mv` で `home/` を並べ替える(直下の `.` を `dot_` に)。
 
 ```
 home/
-├── .zshrc.tera
-├── .zprofile.tera
-├── .gitconfig.tera
-├── .ssh/{config.tera,allowed_signers.tera}
-├── .claude/{CLAUDE.md,settings.json,scripts/statusline.py,skills/hunk-review/}
-├── .codex/config.toml
-├── .config/{git/ignore,herdr/config.toml,mise/config.toml,nvim/,sheldon/plugins.toml}
+├── dot_zshrc.tera
+├── dot_zprofile.tera
+├── dot_gitconfig.tera
+├── dot_ssh/{config.tera,allowed_signers.tera}
+├── dot_claude/{CLAUDE.md,settings.json,scripts/statusline.py,skills/hunk-review/}
+├── dot_codex/config.toml
+├── dot_config/{git/ignore,herdr/config.toml,mise/config.toml,nvim/,sheldon/plugins.toml}
 └── Library/Application Support/iTerm2/DynamicProfiles/default_profile.json
 ```
 
@@ -106,11 +106,11 @@ home/
   - pre-dotfiles: `git_name` / `git_email` が空なら `mise vars prompt` を案内して exit 1(`chezmoi-apply.sh` のチェックの代わり)
   - post-dotfiles: `~/.zshrc.local` と `~/.zprofile.local` が無ければヘッダコメント付きで作る
 - 削除: `.chezmoiroot`、`home/.chezmoi.toml.tmpl`、`home/.chezmoiexternal.toml`、`home/.chezmoiignore`、`home/create_*`、
-  `bootstrap/chezmoi-apply.sh`、`mise.toml` の pre-tools hook、`home/.config/mise/config.toml` の `chezmoi = "latest"`。
+  `bootstrap/chezmoi-apply.sh`、`mise.toml` の pre-tools hook、`home/dot_config/mise/config.toml` の `chezmoi = "latest"`。
 
 ### 2. zsh(oh-my-zsh → sheldon)
 
-- 導入: `home/.config/mise/config.toml` の `[tools]` に `sheldon = "latest"`(registry: `aqua:rossmacarthur/sheldon`)。
+- 導入: `home/dot_config/mise/config.toml` の `[tools]` に `sheldon = "latest"`(registry: `aqua:rossmacarthur/sheldon`)。
 - `~/.config/sheldon/plugins.toml`(この順に読み込む):
 
 | plugin | 取得元 | 固定 | 読み込み |
@@ -129,7 +129,7 @@ home/
   - `eval "$(mise activate zsh)"` を `eval "$(sheldon source)"` より前に移す(sheldon を mise で入れるため)
   - `ALIEN_*` の export は sheldon より前に置く
 - 取得のタイミング: bootstrap task(`bootstrap/post-tools.sh`)で `sheldon lock` を実行し、シェル起動時にネットワークへ取りに行かないようにする。
-- renovate: `home/.config/sheldon/plugins.toml` を regex で追従する。zsh-users / alien は `github-tags`、oh-my-zsh は `git-refs`(master の commit を digest として追従)。`.chezmoiexternal` 用と chezmoi 本体用の customManager は削除する。
+- renovate: `home/dot_config/sheldon/plugins.toml` を regex で追従する。zsh-users / alien は `github-tags`、oh-my-zsh は `git-refs`(master の commit を digest として追従)。`.chezmoiexternal` 用と chezmoi 本体用の customManager は削除する。
 - `bootstrap/post-tools.sh` の hunk-review に関するコメントを、chezmoi から mise `[dotfiles]` に直す。
 
 ### 3. テストと検証

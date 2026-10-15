@@ -4,7 +4,7 @@
 
 **Goal:** chezmoi をやめて dotfiles を mise `[dotfiles]` で配置し、oh-my-zsh 一式を sheldon で読み込む構成にする。
 
-**Architecture:** `home/` を `~` と同じ実名に並べ替え、`mise.toml` の `[dotfiles]` で copy / template する。テンプレートは Tera で、
+**Architecture:** `home/` を並べ替え(直下の `.` を `dot_` に)、`mise.toml` の `[dotfiles]` で copy / template する。テンプレートは Tera で、
 OS は `os()`、WSL は `vars.is_wsl`(wsl module)、1Password は `vars.use_1password`(work module)で分岐する。
 zsh プラグインは `~/.config/sheldon/plugins.toml` で版を固定して sheldon が取得し、bootstrap task で `sheldon lock` する。
 
@@ -18,7 +18,7 @@ zsh プラグインは `~/.config/sheldon/plugins.toml` で版を固定して sh
 - `~/.claude/settings.json` と `~/.codex/config.toml` は丸ごと上書き(copy)。merge は使わない。
 - WSL 判定は `vars.is_wsl`(既定 `"false"`、`mise.wsl.toml` で `"true"`)。カーネル文字列は読まない。
 - vars は文字列。`vars.use_1password == "true"` / `vars.is_wsl == "true"` と文字列で比較する。
-- テンプレートだけ `.tera` を付け、他のソースは `~` と同じ実名にする。
+- `home/` 直下の `.` 始まりの名前は `dot_` に置き換える(例: `home/dot_zshrc.tera`、`home/dot_config/`)。ディレクトリの中身(`nvim/.gitignore` など)はそのまま。テンプレートだけ `.tera` を付ける。
 - プラグインの版: zsh-users と alien は tag、oh-my-zsh は rev(commit SHA)。renovate で追従する。
 - 配置先の集合は現状の `chezmoi managed` と同じにする(`~/.config/nvim/.gitignore` と `.neoconf.json` は配置しない)。新規は `~/.config/sheldon/plugins.toml` のみ。
 - 作業ブランチは全台の移行が終わるまで main にマージしない。push と各マシンへの適用はユーザーの確認を取ってから行う。
@@ -29,8 +29,8 @@ zsh プラグインは `~/.config/sheldon/plugins.toml` で版を固定して sh
 
 | ファイル | 変更 | 役割 |
 |---|---|---|
-| `home/**` | rename / modify | 配置元。`git mv` で実名へ。テンプレートは `.tera` |
-| `home/.config/sheldon/plugins.toml` | create | zsh プラグインの定義 |
+| `home/**` | rename / modify | 配置元。`git mv` で直下の `.` を `dot_` に。テンプレートは `.tera` |
+| `home/dot_config/sheldon/plugins.toml` | create | zsh プラグインの定義 |
 | `mise.toml` | modify | `[dotfiles]`、`is_wsl` var、pre/post-dotfiles hook。pre-tools hook を削除 |
 | `mise.wsl.toml` | modify | `is_wsl = "true"` |
 | `bootstrap/local-files.sh` | create | `~/.zshrc.local` / `~/.zprofile.local` を初回だけ作る |
@@ -53,7 +53,7 @@ zsh プラグインは `~/.config/sheldon/plugins.toml` で版を固定して sh
 **Files:**
 - Rename: `home/**`(下表)
 - Delete: `.chezmoiroot`、`home/.chezmoi.toml.tmpl`、`home/.chezmoiexternal.toml`、`home/.chezmoiignore`、`home/create_dot_zshrc.local`、`home/create_dot_zprofile.local`、`bootstrap/chezmoi-apply.sh`、`tests/bootstrap/chezmoi-apply.test.sh`
-- Modify: `mise.toml`、`home/.config/mise/config.toml`
+- Modify: `mise.toml`、`home/dot_config/mise/config.toml`
 - Test: `tests/bootstrap/dotfiles.test.sh`(新規)
 
 **Interfaces:**
@@ -64,25 +64,25 @@ zsh プラグインは `~/.config/sheldon/plugins.toml` で版を固定して sh
 - [ ] **Step 1: 並べ替え**
 
 ```bash
-git mv home/dot_zshrc.tmpl home/.zshrc.tera
-git mv home/dot_zprofile.tmpl home/.zprofile.tera
-git mv home/dot_gitconfig.tmpl home/.gitconfig.tera
-git mv home/private_dot_ssh home/.ssh
-git mv home/.ssh/private_config.tmpl home/.ssh/config.tera
-git mv home/.ssh/allowed_signers.tmpl home/.ssh/allowed_signers.tera
-git mv home/dot_claude home/.claude
-git mv home/.claude/scripts/executable_statusline.py home/.claude/scripts/statusline.py
-git mv home/.claude/skills/hunk-review/executable_ensure-hunk-pane.sh home/.claude/skills/hunk-review/ensure-hunk-pane.sh
-git update-index --chmod=+x home/.claude/skills/hunk-review/ensure-hunk-pane.sh
-chmod +x home/.claude/skills/hunk-review/ensure-hunk-pane.sh
-git mv home/dot_codex home/.codex
-git mv home/dot_config home/.config
+git mv home/dot_zshrc.tmpl home/dot_zshrc.tera
+git mv home/dot_zprofile.tmpl home/dot_zprofile.tera
+git mv home/dot_gitconfig.tmpl home/dot_gitconfig.tera
+git mv home/private_dot_ssh home/dot_ssh
+git mv home/dot_ssh/private_config.tmpl home/dot_ssh/config.tera
+git mv home/dot_ssh/allowed_signers.tmpl home/dot_ssh/allowed_signers.tera
+git mv home/dot_claude home/dot_claude
+git mv home/dot_claude/scripts/executable_statusline.py home/dot_claude/scripts/statusline.py
+git mv home/dot_claude/skills/hunk-review/executable_ensure-hunk-pane.sh home/dot_claude/skills/hunk-review/ensure-hunk-pane.sh
+git update-index --chmod=+x home/dot_claude/skills/hunk-review/ensure-hunk-pane.sh
+chmod +x home/dot_claude/skills/hunk-review/ensure-hunk-pane.sh
+git mv home/dot_codex home/dot_codex
+git mv home/dot_config home/dot_config
 git rm -q .chezmoiroot home/.chezmoi.toml.tmpl home/.chezmoiexternal.toml home/.chezmoiignore \
   home/create_dot_zshrc.local home/create_dot_zprofile.local bootstrap/chezmoi-apply.sh tests/bootstrap/chezmoi-apply.test.sh
 git ls-files -s home | awk '$1=="100755"{print $4}'
 ```
 
-Expected(最後の行): `home/.claude/scripts/statusline.py` と `home/.claude/skills/hunk-review/ensure-hunk-pane.sh` の 2 行。
+Expected(最後の行): `home/dot_claude/scripts/statusline.py` と `home/dot_claude/skills/hunk-review/ensure-hunk-pane.sh` の 2 行。
 
 - [ ] **Step 2: 失敗するテストを書く**
 
@@ -186,22 +186,22 @@ Expected: `FAIL: statusline.py not executable`(`[dotfiles]` がまだ無いた�
 # Sources live in home/ under their real names; *.tera files are templates.
 # ==========================================================================
 [dotfiles]
-"~/.claude" = { source = "home/.claude", mode = "copy" }
-"~/.codex/config.toml" = { source = "home/.codex/config.toml", mode = "copy" }
-"~/.config/git/ignore" = { source = "home/.config/git/ignore", mode = "copy" }
-"~/.config/herdr/config.toml" = { source = "home/.config/herdr/config.toml", mode = "copy" }
-"~/.config/mise/config.toml" = { source = "home/.config/mise/config.toml", mode = "copy" }
+"~/.claude" = { source = "home/dot_claude", mode = "copy" }
+"~/.codex/config.toml" = { source = "home/dot_codex/config.toml", mode = "copy" }
+"~/.config/git/ignore" = { source = "home/dot_config/git/ignore", mode = "copy" }
+"~/.config/herdr/config.toml" = { source = "home/dot_config/herdr/config.toml", mode = "copy" }
+"~/.config/mise/config.toml" = { source = "home/dot_config/mise/config.toml", mode = "copy" }
 # chezmoi never deployed these (it ignores dot-prefixed sources); keep it that way.
-"~/.config/nvim" = { source = "home/.config/nvim", mode = "copy", exclude = ["/.gitignore", "/.neoconf.json"] }
+"~/.config/nvim" = { source = "home/dot_config/nvim", mode = "copy", exclude = ["/.gitignore", "/.neoconf.json"] }
 "~/Library/Application Support/iTerm2/DynamicProfiles/default_profile.json" = { source = "home/Library/Application Support/iTerm2/DynamicProfiles/default_profile.json", mode = "copy", variants = [{ os = "macos" }] }
 ```
 
 同じファイルの vars のコメントを直す:
 - `# bootstrap/chezmoi-apply.sh fails if they are still empty.` → `# The pre-dotfiles hook fails if they are still empty.`
-- `# Empty: chezmoi templates fall back to <homeDir>/.ssh/git_signing_key.pub.` → `# Empty: home/.gitconfig.tera falls back to ~/.ssh/git_signing_key.pub.`
+- `# Empty: chezmoi templates fall back to <homeDir>/.ssh/git_signing_key.pub.` → `# Empty: home/dot_gitconfig.tera falls back to ~/.ssh/git_signing_key.pub.`
 
-`home/.config/mise/config.toml`:
-- 1 行目 `# Managed by chezmoi — edit with: chezmoi edit ~/.config/mise/config.toml` → `# Managed by mise [dotfiles] — edit home/.config/mise/config.toml in kukv/dotfiles`
+`home/dot_config/mise/config.toml`:
+- 1 行目 `# Managed by chezmoi — edit with: chezmoi edit ~/.config/mise/config.toml` → `# Managed by mise [dotfiles] — edit home/dot_config/mise/config.toml in kukv/dotfiles`
 - 次の 2 行を削除:
 
 ```toml
@@ -231,7 +231,7 @@ git commit -m "refactor(dotfiles): chezmoi をやめ、home/ を mise [dotfiles]
 ### Task 2: テンプレート(gitconfig / zprofile / ssh)と is_wsl
 
 **Files:**
-- Modify: `home/.gitconfig.tera`、`home/.zprofile.tera`、`home/.ssh/config.tera`、`home/.ssh/allowed_signers.tera`、`mise.toml`、`mise.wsl.toml`
+- Modify: `home/dot_gitconfig.tera`、`home/dot_zprofile.tera`、`home/dot_ssh/config.tera`、`home/dot_ssh/allowed_signers.tera`、`mise.toml`、`mise.wsl.toml`
 - Test: `tests/bootstrap/dotfiles.test.sh`、`tests/bootstrap/plan.sh`
 
 **Interfaces:**
@@ -308,14 +308,14 @@ Expected: `FAIL: .gitconfig not rendered`
 
 - [ ] **Step 3: テンプレートを書く**
 
-`home/.gitconfig.tera`(全置換):
+`home/dot_gitconfig.tera`(全置換):
 
 ```
 {%- set op = vars.use_1password == "true" -%}
 {%- set wsl = vars.is_wsl == "true" -%}
 {%- set key_file = vars.git_signing_key_file -%}
 {%- if key_file == "" -%}{%- set key_file = env.HOME ~ "/.ssh/git_signing_key.pub" -%}{%- endif -%}
-# Managed by mise [dotfiles] — edit home/.gitconfig.tera in kukv/dotfiles
+# Managed by mise [dotfiles] — edit home/dot_gitconfig.tera in kukv/dotfiles
 [user]
     name = {{ vars.git_name }}
     email = {{ vars.git_email }}
@@ -344,7 +344,7 @@ Expected: `FAIL: .gitconfig not rendered`
     program = op-ssh-sign-wsl.exe
 {%- endif %}
 {%- else %}
-    # No 1Password: verify local-key signatures against this file (rendered from home/.ssh/allowed_signers.tera).
+    # No 1Password: verify local-key signatures against this file (rendered from home/dot_ssh/allowed_signers.tera).
     allowedSignersFile = {{ env.HOME }}/.ssh/allowed_signers
 {%- endif %}
 [commit]
@@ -353,10 +353,10 @@ Expected: `FAIL: .gitconfig not rendered`
     gpgsign = true
 ```
 
-`home/.zprofile.tera`(全置換):
+`home/dot_zprofile.tera`(全置換):
 
 ```
-# Managed by mise [dotfiles] — edit home/.zprofile.tera in kukv/dotfiles
+# Managed by mise [dotfiles] — edit home/dot_zprofile.tera in kukv/dotfiles
 # Machine-local, untracked overrides go in ~/.zprofile.local
 
 export PATH="$HOME/.local/bin:$PATH"
@@ -394,16 +394,16 @@ export MAKEFLAGS="-j$JOBMAX"
 [ -f ~/.zprofile.local ] && source ~/.zprofile.local
 ```
 
-`home/.ssh/config.tera`: 先頭 4 行(`# Managed by chezmoi …` 〜 `{{- if $op }}`)を次の 2 行に、`{{- end }}` を `{%- endif %}` に置き換える。`Host github` 以降は変更しない。
+`home/dot_ssh/config.tera`: 先頭 4 行(`# Managed by chezmoi …` 〜 `{{- if $op }}`)を次の 2 行に、`{{- end }}` を `{%- endif %}` に置き換える。`Host github` 以降は変更しない。
 
 ```
-# Managed by mise [dotfiles] — edit home/.ssh/config.tera in kukv/dotfiles
+# Managed by mise [dotfiles] — edit home/dot_ssh/config.tera in kukv/dotfiles
 {%- if vars.use_1password == "true" %}
 ```
 
 (置き換え後の先頭は `# Managed…` / `{%- if … %}` / 空行 / `Include ~/.ssh/1Password/config` / `{%- endif %}` / 空行 / `Host github`。)
 
-`home/.ssh/allowed_signers.tera`(全置換):
+`home/dot_ssh/allowed_signers.tera`(全置換):
 
 ```
 {# Local-key machines only: verify our own commit signatures. Renders empty (and the
@@ -421,11 +421,11 @@ export MAKEFLAGS="-j$JOBMAX"
 `mise.toml` の `[dotfiles]` の先頭に:
 
 ```toml
-"~/.zprofile" = { source = "home/.zprofile.tera", mode = "template" }
-"~/.gitconfig" = { source = "home/.gitconfig.tera", mode = "template" }
+"~/.zprofile" = { source = "home/dot_zprofile.tera", mode = "template" }
+"~/.gitconfig" = { source = "home/dot_gitconfig.tera", mode = "template" }
 "~/.ssh" = { permissions = "0700" }
-"~/.ssh/config" = { source = "home/.ssh/config.tera", mode = "template", permissions = "0600", variants = [{ os = "macos" }] }
-"~/.ssh/allowed_signers" = { source = "home/.ssh/allowed_signers.tera", mode = "template", remove_empty = true }
+"~/.ssh/config" = { source = "home/dot_ssh/config.tera", mode = "template", permissions = "0600", variants = [{ os = "macos" }] }
+"~/.ssh/allowed_signers" = { source = "home/dot_ssh/allowed_signers.tera", mode = "template", remove_empty = true }
 ```
 
 `mise.toml` の `[vars.git_signing_key_file]` ブロックの後に:
@@ -513,8 +513,8 @@ git commit -m "feat(dotfiles): gitconfig / zprofile / ssh を Tera テンプレ�
 ### Task 3: zsh(sheldon)
 
 **Files:**
-- Create: `home/.config/sheldon/plugins.toml`、`tests/bootstrap/zsh.test.sh`
-- Modify: `home/.zshrc.tera`、`home/.config/mise/config.toml`、`mise.toml`、`bootstrap/post-tools.sh`
+- Create: `home/dot_config/sheldon/plugins.toml`、`tests/bootstrap/zsh.test.sh`
+- Modify: `home/dot_zshrc.tera`、`home/dot_config/mise/config.toml`、`mise.toml`、`bootstrap/post-tools.sh`
 - Test: `tests/bootstrap/dotfiles.test.sh`、`tests/bootstrap/zsh.test.sh`
 
 **Interfaces:**
@@ -609,10 +609,10 @@ Expected: `FAIL: .zshrc does not load sheldon`
 
 oh-my-zsh の rev は計画作成時点の master(`964ddf789b022b6958b27d02d7fa54f552de21e9`、2026-10-13)。実装時に `gh api repos/ohmyzsh/ohmyzsh/commits/master --jq .sha` で最新に更新してよい。
 
-`home/.config/sheldon/plugins.toml`(新規):
+`home/dot_config/sheldon/plugins.toml`(新規):
 
 ```toml
-# Managed by mise [dotfiles] — edit home/.config/sheldon/plugins.toml in kukv/dotfiles.
+# Managed by mise [dotfiles] — edit home/dot_config/sheldon/plugins.toml in kukv/dotfiles.
 # Plugins load in this order. Versions are pinned; renovate tracks them (see renovate.json).
 shell = "zsh"
 
@@ -659,12 +659,12 @@ github = "zsh-users/zsh-syntax-highlighting"
 tag = "0.8.0"
 ```
 
-`home/.zshrc.tera`: 先頭から `# = mise` セクション(`eval "$(mise activate zsh)"` の行)までを次で置き換える。`# = peco` 以降は残し、そのうち `alias ccw='claude -w'` の後ろから `# = Zsh history` の直前まで(update_os と WSL の分岐)も次で置き換える。
+`home/dot_zshrc.tera`: 先頭から `# = mise` セクション(`eval "$(mise activate zsh)"` の行)までを次で置き換える。`# = peco` 以降は残し、そのうち `alias ccw='claude -w'` の後ろから `# = Zsh history` の直前まで(update_os と WSL の分岐)も次で置き換える。
 
 先頭部分:
 
 ```
-# Managed by mise [dotfiles] — edit home/.zshrc.tera in kukv/dotfiles
+# Managed by mise [dotfiles] — edit home/dot_zshrc.tera in kukv/dotfiles
 # Machine-local, untracked overrides go in ~/.zshrc.local
 
 # ==========================================================================
@@ -737,7 +737,7 @@ alias scp='scp.exe'
 
 置き換え後、ファイル内に `{{ .` / `{{-` / `chezmoi` / `oh-my-zsh.sh` / `ZSH_THEME` / `plugins=(` が残っていないこと:
 
-Run: `grep -nE '\{\{[-. ]|chezmoi|oh-my-zsh\.sh|ZSH_THEME|plugins=\(' home/.zshrc.tera`
+Run: `grep -nE '\{\{[-. ]|chezmoi|oh-my-zsh\.sh|ZSH_THEME|plugins=\(' home/dot_zshrc.tera`
 Expected: 出力なし
 
 - [ ] **Step 4: エントリ・ツール・lock を足す**
@@ -745,11 +745,11 @@ Expected: 出力なし
 `mise.toml` の `[dotfiles]` の先頭に:
 
 ```toml
-"~/.zshrc" = { source = "home/.zshrc.tera", mode = "template" }
-"~/.config/sheldon/plugins.toml" = { source = "home/.config/sheldon/plugins.toml", mode = "copy" }
+"~/.zshrc" = { source = "home/dot_zshrc.tera", mode = "template" }
+"~/.config/sheldon/plugins.toml" = { source = "home/dot_config/sheldon/plugins.toml", mode = "copy" }
 ```
 
-`home/.config/mise/config.toml` の `ghq = "latest"` の次の行に:
+`home/dot_config/mise/config.toml` の `ghq = "latest"` の次の行に:
 
 ```toml
 # zsh plugins (~/.config/sheldon/plugins.toml); ~/.zshrc runs `sheldon source`
@@ -895,7 +895,7 @@ git commit -m "feat(dotfiles): git_name のチェックと local ファイルの
 - Modify: `.github/workflows/ci.yaml`、`renovate.json`
 
 **Interfaces:**
-- Consumes: `tests/bootstrap/{dotfiles,zsh,plan,init}.test.sh` / `plan.sh`、`home/.config/sheldon/plugins.toml` の `github` / `tag` / `rev` の行。
+- Consumes: `tests/bootstrap/{dotfiles,zsh,plan,init}.test.sh` / `plan.sh`、`home/dot_config/sheldon/plugins.toml` の `github` / `tag` / `rev` の行。
 
 - [ ] **Step 1: CI を書き換える**
 
@@ -929,7 +929,7 @@ git commit -m "feat(dotfiles): git_name のチェックと local ファイルの
     {
       "customType": "regex",
       "managerFilePatterns": [
-        "/^home/\\.config/sheldon/plugins\\.toml$/"
+        "/^home/dot_config/sheldon/plugins\\.toml$/"
       ],
       "matchStrings": [
         "github = \"(?<depName>[^\"]+)\"\\s+tag = \"(?<currentValue>[^\"]+)\""
@@ -939,7 +939,7 @@ git commit -m "feat(dotfiles): git_name のチェックと local ファイルの
     {
       "customType": "regex",
       "managerFilePatterns": [
-        "/^home/\\.config/sheldon/plugins\\.toml$/"
+        "/^home/dot_config/sheldon/plugins\\.toml$/"
       ],
       "matchStrings": [
         "github = \"ohmyzsh/ohmyzsh\"\\s+rev = \"(?<currentDigest>[0-9a-f]{40})\""
@@ -1171,7 +1171,7 @@ dotfiles/
 ├── mise.wsl.toml             # module: WSL(is_wsl、wsl.conf など)
 ├── mise.work.toml            # module: 会社 PC(use_1password = false)
 ├── bootstrap/                # init.sh と hook / 定期実行用スクリプト
-├── home/                     # ~ に配置するファイル(~ と同じ名前。*.tera はテンプレート)
+├── home/                     # ~ に配置するファイル(直下の dot_ は ~ の . に対応。*.tera はテンプレート)
 ├── tests/                    # bootstrap / dotfiles / zsh のテストと Docker 環境
 └── docs/
 ```
@@ -1218,7 +1218,7 @@ bootstrap が**初回に一度だけ生成**し(`bootstrap/local-files.sh`)、�
   - `vars.is_wsl`(wsl module): 例: WSL の `alias ssh='ssh.exe'`、`sshCommand = ssh.exe`
   - `vars.use_1password`(work module で `false`): ローカル鍵での署名と `~/.ssh/allowed_signers`
 - macOS だけのファイルは `[dotfiles]` の `variants = [{ os = "macos" }]`
-- zsh のプラグイン(oh-my-zsh の lib と git プラグイン、zsh-users の各プラグイン、alien テーマ)は sheldon(`home/.config/sheldon/plugins.toml`)で取得します。版は固定し、renovate が追従します
+- zsh のプラグイン(oh-my-zsh の lib と git プラグイン、zsh-users の各プラグイン、alien テーマ)は sheldon(`home/dot_config/sheldon/plugins.toml`)で取得します。版は固定し、renovate が追従します
 
 ---
 
@@ -1258,7 +1258,7 @@ git commit -m "docs: chezmoi 撤去に合わせて README と手順書を更新�
 - [ ] **Step 8: memory を更新する(リポジトリ外、コミットなし)**
 
 `claude-skills-provisioning.md` の本文で、chezmoi を現役の仕組みとして書いている箇所を確認する。`run_onchange` の検証の話は「過去に chezmoi で試した理由」として残し、
-`hunk-review` のローダーの配置元を「mise `[dotfiles]`(`home/.claude/skills/hunk-review`)」と明記する。MEMORY.md の該当行の説明も、
+`hunk-review` のローダーの配置元を「mise `[dotfiles]`(`home/dot_claude/skills/hunk-review`)」と明記する。MEMORY.md の該当行の説明も、
 「chezmoi run_onchange が使えない理由つき」→「chezmoi 時代に run_onchange が使えなかった理由つき」にする。
 
 ---
