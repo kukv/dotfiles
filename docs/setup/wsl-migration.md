@@ -45,7 +45,7 @@ systemctl list-timers --all | grep os-setup
 grep github_token /etc/ansible/extra_vars.yaml
 ```
 
-`bootstrap.env` を作り、確認した token で 2 行書く。
+`bootstrap.env` を作り、確認した token を書く。
 
 ```bash
 mkdir -p ~/.local/etc
@@ -55,7 +55,6 @@ vi ~/.local/etc/bootstrap.env
 
 ```
 MISE_GITHUB_TOKEN=<token>
-HOMEBREW_GITHUB_API_TOKEN=<token>
 ```
 
 git の name / email を確認し、`mise vars prompt` の質問に表示された値を入力する。

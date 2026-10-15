@@ -40,7 +40,6 @@ systemd=true
 
 ```bash
 export MISE_GITHUB_TOKEN=<token>
-export HOMEBREW_GITHUB_API_TOKEN=<token>
 ```
 
 ## 4. init.sh を実行する
@@ -57,7 +56,7 @@ work module を使うマシンは `--env wsl,work` にする。
 
 ## 5. GitHub token を保存する
 
-init.sh が空の `~/.local/etc/bootstrap.env`(0600)を作っている。週次実行で使う token を 2 行書く。
+init.sh が空の `~/.local/etc/bootstrap.env`(0600)を作っている。週次実行で使う token を書く。
 
 ```bash
 vi ~/.local/etc/bootstrap.env
@@ -65,7 +64,6 @@ vi ~/.local/etc/bootstrap.env
 
 ```
 MISE_GITHUB_TOKEN=<token>
-HOMEBREW_GITHUB_API_TOKEN=<token>
 ```
 
 ## 6. WSL を再起動する
