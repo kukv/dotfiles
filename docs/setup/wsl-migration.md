@@ -8,14 +8,14 @@ os-setup (Ansible) で構築済みの WSL を、この dotfiles の mise bootstr
 
 ## 1. 移行前の状態を保存する
 
+存在しないファイルの `cp` エラーは無視してよい。
+
 ```bash
 mkdir -p ~/migration-backup
 cp -p ~/.gitconfig ~/.zshrc ~/.zprofile ~/.config/mise/config.toml ~/.config/chezmoi/chezmoi.toml ~/migration-backup/
 [ -f ~/.ssh/config ] && cp -p ~/.ssh/config ~/migration-backup/ssh_config
 ls -la ~/migration-backup
 ```
-
-存在しないファイルの `cp` エラーは無視してよい。
 
 ## 2. mise を入れ直す
 
@@ -35,17 +35,19 @@ sudo systemctl daemon-reload
 systemctl list-timers --all | grep os-setup
 ```
 
-最後の行で何も出なければよい。
+期待値:
+
+- 最後の `grep` で何も出ない
 
 ## 4. extra_vars の値を移す
 
-旧環境の extra_vars を表示する(token が画面に出るので注意)。
+旧環境の extra_vars を表示する。token が画面に出るので注意する。
 
 ```bash
 cat /etc/ansible/extra_vars.yaml
 ```
 
-各キーの移し先は次のとおり。以下の手順で順に移す。
+各キーの移し先は次のとおり。以降の手順で順に移す。
 
 | extra_vars のキー | 移し先 |
 |---|---|
@@ -79,7 +81,7 @@ module を選ぶ。`git.use_1password` が `true` または未設定なら次を
 printf 'env = ["wsl"]\n' > ~/.config/mise/miserc.local.toml
 ```
 
-`git.use_1password` が `false` なら代わりに次を実行する(`use_1password` は module の `[vars]` で決まり、`mise vars` では上書きできない)。
+`git.use_1password` が `false` なら代わりに次を実行する。`use_1password` は module の `[vars]` で決まり、`mise vars` では上書きできない。
 
 ```bash
 printf 'env = ["wsl", "work"]\n' > ~/.config/mise/miserc.local.toml
@@ -98,13 +100,13 @@ NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Ho
 sudo rm -rf /home/linuxbrew
 ```
 
-ここで開いたシェルでは `.zprofile` が brew を見つけられずエラーを出すが、6 の適用で直る。
-古いシェルの `mise` は brew の mise を呼ぶ関数なので使えない(`~/.local/bin/mise` を使う)。
+- ここで開いたシェルでは `.zprofile` が brew を見つけられずエラーを出すが、手順 6 の適用で直る。
+- 古いシェルの `mise` は brew の mise を呼ぶ関数なので使えない(`~/.local/bin/mise` を使う)。
 
 ## 6. 差分を確認してから適用する
 
-`--from` の `--dry-run` はチェックアウトが無いと clone せずに止まるので、先に clone しておく
-(origin URL が `--from` の URL と一致すれば、mise はそのチェックアウトを使う)。
+`--from` の `--dry-run` はチェックアウトが無いと clone せずに止まるので、先に clone しておく。
+origin URL が `--from` の URL と一致すれば、mise はそのチェックアウトを使う。
 
 ```bash
 git clone https://github.com/kukv/dotfiles.git ~/.local/share/dotfiles
@@ -151,15 +153,25 @@ getent hosts github.com
 zsh -ic 'alias ssh'
 ```
 
-期待値: `../run/systemd/resolve/stub-resolv.conf` / 即座に返る(5 秒待たされない)/ `ssh=ssh.exe`
+期待値:
 
-PowerShell で `wsl --shutdown` を実行し、WSL を開き直して確認する。
+- `readlink` が `../run/systemd/resolve/stub-resolv.conf`
+- `getent hosts github.com` が即座に返る(5 秒待たされない)
+- `alias ssh` が `ssh=ssh.exe`
+
+PowerShell で `wsl --shutdown` を実行し、WSL を開き直して実行する。
 
 ```bash
 systemctl --user list-timers | grep mise-bootstrap
 ```
 
-## 8. 後片付け
+期待値:
+
+- `list-timers` に mise-bootstrap の timer が出る
+
+## 8. 旧環境を片付ける
+
+旧 init.sh が入れた ansible(PPA と apt パッケージ)、galaxy の collections / token、ログと logrotate 設定を消す。
 
 ```bash
 rm -rf ~/.local/share/chezmoi ~/.ansible
@@ -170,8 +182,6 @@ sudo apt-get autoremove -y
 sudo rm -rf /var/log/ansible /etc/ansible /etc/logrotate.d/ansible-pull
 ```
 
-旧 init.sh が入れた ansible(PPA と apt パッケージ)、galaxy の collections / token、ログと logrotate 設定を消す。
-
 os-setup が入れていた herdr plugin のうち、今は管理していない 2 つを外す(入っていなければエラーになるだけ)。
 
 ```bash
@@ -180,5 +190,5 @@ herdr plugin uninstall official.browser
 herdr plugin list
 ```
 
-`/etc/systemd/resolved.conf` に Ansible の `# BEGIN DNS SETUP` ブロックが残るが、drop-in と同じ値なので無害。消す場合は手で削除する。
-問題が無ければ `~/migration-backup` も削除してよい。
+- `/etc/systemd/resolved.conf` に Ansible の `# BEGIN DNS SETUP` ブロックが残るが、drop-in と同じ値なので無害。消す場合は手で削除する。
+- 問題が無ければ `~/migration-backup` も削除してよい。

@@ -4,21 +4,25 @@
 os-setup (Ansible) で構築済みの Mac は [mac-migration.md](mac-migration.md) を使う。
 
 - コマンドはそのまま貼れるように書いてある。シェル変数は使わない(シェルを開き直しても続きから実行できる)。
-- 自分のユーザーで、デスクトップにログインした状態のターミナル(Terminal.app)で実行する。SSH 経由だと LaunchAgent を登録できない。
+- 自分のユーザーで、デスクトップにログインした状態のターミナル(Terminal.app / iTerm2 など)で実行する。LaunchAgent は GUI ログインセッション(`gui/<uid>`)にしか登録できないため、SSH 経由では実行しない。
 
 ## 1. Xcode Command Line Tools を入れる
+
+ダイアログに従ってインストールし、完了を待つ。
 
 ```bash
 xcode-select --install
 ```
 
-ダイアログに従ってインストールし、完了を待つ。
+完了したら確認する。
 
 ```bash
 xcode-select -p
 ```
 
-パスが出ればよい。
+期待値:
+
+- パスが出る
 
 ## 2. App Store にサインインする
 
@@ -26,8 +30,8 @@ xcode-select -p
 
 ## 3. (任意)GitHub token を用意する
 
-`bootstrap.env` は週次実行(`update_os` を含む)でだけ読まれる。初回実行には効かない。
-初回から token を使いたい場合は、4 を実行するシェルで先に export しておく(API の rate limit 対策)。
+`bootstrap.env` は週次実行(`update_os` を含む)でしか読まれず、初回実行には効かない。
+初回から token を使いたい場合(API の rate limit 対策)は、手順 4 を実行するシェルで先に export しておく。
 
 ```bash
 export MISE_GITHUB_TOKEN=<token>
@@ -70,10 +74,11 @@ HOMEBREW_GITHUB_API_TOKEN=<token>
 vi ~/.ssh/git_signing_key.pub
 ```
 
-## 7. 手動で入れるもの
+## 7. 管理外のアプリを手で入れる
 
-sudo が必要な pkg 形式の cask と Homebrew 外のアプリは管理していない。必要なら手で入れる
-(cloudflare-warp / logi-options+ / microsoft-office / onedrive / zoom / tart / softnet / LocalStack Desktop)。
+sudo が必要な pkg 形式の cask と Homebrew 外のアプリは管理していない。必要なら手で入れる。
+
+- cloudflare-warp / logi-options+ / microsoft-office / onedrive / zoom / tart / softnet / LocalStack Desktop
 
 ## 8. 成功条件を確認する
 
