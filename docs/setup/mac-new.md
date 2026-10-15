@@ -23,21 +23,17 @@ xcode-select -p
 
 - パスが出る
 
-## 2. App Store にサインインする
-
-`mas` で LINE / Kindle / Xcode を入れるため、App Store.app を開いてサインインしておく。
-
-## 3. (任意)GitHub token を用意する
+## 2. (任意)GitHub token を用意する
 
 `bootstrap.env` は週次実行(`update_os` を含む)でしか読まれず、初回実行には効かない。
-初回から token を使いたい場合(API の rate limit 対策)は、手順 4 を実行するシェルで先に export しておく。
+初回から token を使いたい場合(API の rate limit 対策)は、手順 3 を実行するシェルで先に export しておく。
 
 ```bash
 export MISE_GITHUB_TOKEN=<token>
 export HOMEBREW_GITHUB_API_TOKEN=<token>
 ```
 
-## 4. init.sh を実行する
+## 3. init.sh を実行する
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/kukv/dotfiles/main/bootstrap/init.sh | sh
@@ -46,9 +42,8 @@ curl -fsSL https://raw.githubusercontent.com/kukv/dotfiles/main/bootstrap/init.s
 - Homebrew が無ければインストーラが起動し、sudo のパスワードと確認を聞かれる。
 - 途中で git の name / email を聞かれる(`~/.local/state/mise/vars.toml` に保存される)。
 - cask のインストールで sudo のパスワードを聞かれることがある。
-- Xcode を含むため初回は時間がかかる。
 
-## 5. GitHub token を保存する
+## 4. GitHub token を保存する
 
 init.sh が空の `~/.local/etc/bootstrap.env`(0600)を作っている。週次実行で使う token を書く。
 
@@ -61,7 +56,7 @@ MISE_GITHUB_TOKEN=<token>
 HOMEBREW_GITHUB_API_TOKEN=<token>
 ```
 
-## 6. 1Password の SSH agent と署名鍵を用意する
+## 5. 1Password の SSH agent と署名鍵を用意する
 
 `~/.gitconfig` は 1Password の `op-ssh-sign` で署名し、`~/.ssh/config` は `~/.ssh/1Password/config` を読む。
 
@@ -73,13 +68,13 @@ HOMEBREW_GITHUB_API_TOKEN=<token>
 vi ~/.ssh/git_signing_key.pub
 ```
 
-## 7. 管理外のアプリを手で入れる
+## 6. 管理外のアプリを手で入れる
 
 sudo が必要な pkg 形式の cask と Homebrew 外のアプリは管理していない。必要なら手で入れる。
 
 - cloudflare-warp / logi-options+ / microsoft-office / onedrive / zoom / tart / softnet / LocalStack Desktop
 
-## 8. 成功条件を確認する
+## 7. 成功条件を確認する
 
 新しいターミナルを開いて実行する。
 

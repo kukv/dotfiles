@@ -12,7 +12,6 @@
 "brew:plantuml" = "latest"
 "brew:nmap" = "latest"
 "brew:gnupg" = "latest"
-"brew:mas" = "latest"
 # The prebuilt sheldon (mise tool) links /opt/homebrew/opt/openssl@3; Homebrew's default openssl is newer.
 "brew:openssl@3" = "latest"
 
@@ -41,11 +40,6 @@
 # cannot answer the password prompt). Install/upgrade manually:
 #   cloudflare-warp, logi-options+, microsoft-office, onedrive, zoom
 # LocalStack Desktop is not distributed via Homebrew or the App Store.
-
-# Mac App Store (requires App Store sign-in)
-"mas:539883307" = "latest"  # LINE
-"mas:302584613" = "latest"  # Amazon Kindle
-"mas:497799835" = "latest"  # Xcode
 
 # ==========================================================================
 # hooks
