@@ -19,7 +19,7 @@ zsh プラグインは `~/.config/sheldon/plugins.toml` で版を固定して sh
 - WSL 判定は `vars.is_wsl`(既定 `"false"`、`mise.wsl.toml` で `"true"`)。カーネル文字列は読まない。
 - vars は文字列。`vars.use_1password == "true"` / `vars.is_wsl == "true"` と文字列で比較する。
 - `home/` 直下の `.` 始まりの名前は `dot_` に置き換える(例: `home/dot_zshrc.tera`、`home/dot_config/`)。ディレクトリの中身(`nvim/.gitignore` など)はそのまま。テンプレートだけ `.tera` を付ける。
-- プラグインの版: zsh-users と alien は tag、oh-my-zsh は rev(commit SHA)。renovate で追従する。
+- プラグインの版: zsh-users と alien は tag。renovate で追従する。oh-my-zsh は一切使わない(必要な挙動は zshrc に自分で書く)。
 - 配置先の集合は現状の `chezmoi managed` と同じにする(`~/.config/nvim/.gitignore` と `.neoconf.json` は配置しない)。新規は `~/.config/sheldon/plugins.toml` のみ。
 - 作業ブランチは全台の移行が終わるまで main にマージしない。push と各マシンへの適用はユーザーの確認を取ってから行う。
 - worktree で作業する。`git -C <別ディレクトリ>` は使わない。

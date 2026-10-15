@@ -28,8 +28,8 @@ oh-my-zsh 一式を sheldon に置き換える。
 | WSL 判定 | wsl module の var `is_wsl`(既定 `"false"`、`mise.wsl.toml` で `"true"`) | `use_1password` と同じ仕組み。CI で `-E wsl` により WSL 分岐を検証できる |
 | `~/.zshrc.local` / `~/.zprofile.local`(chezmoi の `create_`) | post-dotfiles hook で「無ければ作る」 | `create_` と同じ挙動で、既存ファイルに触れない |
 | ソースの配置 | `home/` 直下の `.` 始まりの名前だけ `dot_` に置き換え(ディレクトリの中身はアプリ側の名前のまま)、テンプレートは `.tera` を付ける。`**/.ssh/**` 等の Claude の deny ルールや、mise / Claude Code が `home/.config` `home/.claude` を設定として拾うことを避ける。配置先との対応も見て分かる |
-| zsh 構成 | sheldon。oh-my-zsh は `lib/*.zsh` と `plugins/git` だけを sheldon で読む | ユーザー決定。操作感は維持し、oh-my-zsh のフレームワーク部分(`oh-my-zsh.sh`、自動更新)は使わない |
-| プラグインの版管理 | 全部固定 + renovate(zsh-users / alien は tag、oh-my-zsh は rev) | 全台が同じ版になり、壊れたら PR 単位で戻せる |
+| zsh 構成 | sheldon。oh-my-zsh は使わず、必要な挙動(補完・キーバインド・履歴・ディレクトリ・見た目、git エイリアス 18 個)は zshrc に自分で書く | ユーザー決定(2026-10-16。当初は lib と git プラグインを sheldon で読む案だったが、oh-my-zsh 自体を廃止することにした) |
+| プラグインの版管理 | 全部固定 + renovate(zsh-users / alien は tag) | 全台が同じ版になり、壊れたら PR 単位で戻せる |
 | 展開順 | 2 段階。① Mac / 会社 WSL を今の main(chezmoi あり)で os-setup から移行 → ② 本ブランチで 3 台を移行してからマージ | 変更を 1 つずつ入れ、失敗時の切り分けと切り戻しを簡単にする |
 
 ## 現状の棚卸し(chezmoi が担っているもの)
@@ -117,7 +117,6 @@ home/
 |---|---|---|---|
 | zsh-completions | `zsh-users/zsh-completions` | tag `0.36.0` | `apply = ["fpath"]`(`src`) |
 | compinit | inline | — | `autoload -Uz compinit && compinit` |
-| ohmyzsh | `ohmyzsh/ohmyzsh` | `rev` | `use = ["lib/*.zsh", "plugins/git/git.plugin.zsh"]` |
 | alien | `eendroroy/alien` | tag `2.1.2` | `use = ["alien.zsh"]`(submodule は sheldon が再帰的に取得) |
 | zsh-autosuggestions | `zsh-users/zsh-autosuggestions` | tag `v0.7.1` | source |
 | zsh-history-substring-search | `zsh-users/zsh-history-substring-search` | tag `v1.1.0` | source |
@@ -125,11 +124,20 @@ home/
 
 - zshrc:
   - 削除: `ZSH` / `ZSH_THEME` / `plugins=()` / `source $ZSH/oh-my-zsh.sh`、手書きの `fpath+=…` と `compinit`
-  - `ZSH_CACHE_DIR` を設定する(oh-my-zsh の lib が参照するため。`~/.cache/zsh`、無ければ作る)
   - `eval "$(mise activate zsh)"` を `eval "$(sheldon source)"` より前に移す(sheldon を mise で入れるため)
   - `ALIEN_*` の export は sheldon より前に置く
+  - **oh-my-zsh は一切使わない(2026-10-16 ユーザー決定)。** `lib/*.zsh` が提供していた挙動のうち、次を zshrc に自分で書く:
+    - 補完: `menu select`、大文字小文字を区別しない / 部分一致の `matcher-list`、候補の色、キャッシュ(`~/.cache/zsh`)、`bashcompinit`、
+      `auto_menu` / `complete_in_word` / `always_to_end`
+    - キーバインド: `bindkey -e`、↑↓ に `up/down-line-or-beginning-search`、Home / End / Delete、Ctrl+←→、Shift+Tab(`reverse-menu-complete`)、
+      Ctrl+X Ctrl+E(`edit-command-line`)
+    - 履歴: `share_history`、`hist_ignore_dups`、`hist_ignore_space`、`hist_verify`、`hist_expire_dups_first`
+    - ディレクトリ: `auto_cd`、`auto_pushd`、`pushd_ignore_dups`、`pushdminus`、`...`〜`......` のグローバルエイリアス、`-`、`1`〜`9`、`md`、`rd`
+    - 見た目・その他: `ls` / `grep` の色、ターミナルのタイトル更新、`url-quote-magic` / `bracketed-paste-magic`、`interactive_comments`、`multios`、`long_list_jobs`
+    - git エイリアス(oh-my-zsh と同じ定義)18 個: `g` `gst` `ga` `gaa` `gc` `gd` `gds` `gb` `gco` `gsw` `gswc` `gf` `gl` `gp` `grb` `glog` `gsta`(`git stash push`) `gstp`
+  - 選ばなかったもの(`omz` コマンド、残りの git エイリアス、`_`、`lsa`、`afind` など)は無くなる。zshrc が上書きしていた `ll` / `la` / `l` と Ctrl+R(peco)は従来どおり
 - 取得のタイミング: bootstrap task(`bootstrap/post-tools.sh`)で `sheldon lock` を実行し、シェル起動時にネットワークへ取りに行かないようにする。
-- renovate: `home/dot_config/sheldon/plugins.toml` を regex で追従する。zsh-users / alien は `github-tags`、oh-my-zsh は `git-refs`(master の commit を digest として追従)。`.chezmoiexternal` 用と chezmoi 本体用の customManager は削除する。
+- renovate: `home/dot_config/sheldon/plugins.toml` を regex で追従する。zsh-users / alien は `github-tags`。`.chezmoiexternal` 用と chezmoi 本体用の customManager は削除する。
 - `bootstrap/post-tools.sh` の hunk-review に関するコメントを、chezmoi から mise `[dotfiles]` に直す。
 
 ### 3. テストと検証
@@ -141,7 +149,7 @@ home/
     ローカル鍵マシンの `allowedSignersFile` と `allowed_signers` の生成(1Password の署名プログラムが混入しない)、linuxbrew / os-setup の残骸が無い。
   - 追加: `-E wsl` で `ssh.exe` / `op-ssh-sign-wsl.exe` が入る。apply 直後の `mise dot status --missing` が exit 0。
     nvim の除外ファイルが配置されていない。実行ビットが付いている。`git_name` が空だと bootstrap が dotfiles ステップより前で失敗する。
-- zsh のスモークテスト: 一時 HOME で `sheldon lock` → `zsh -ic` で起動し、stderr が空であること、`gst` エイリアスとプロンプトが設定されていること(ubuntu runner には zsh を入れる)。
+- zsh のスモークテスト: 一時 HOME で `sheldon lock` → `zsh -ic` で起動し、stderr が空であること、`gst` / `gl` / `gsw` エイリアス、`share_history`、`auto_cd`、emacs モード、↑ の前方一致検索、プロンプトが設定されていること(ubuntu runner には zsh を入れる)。
 - `tests/bootstrap/plan.sh`: `-E wsl` で `is_wsl` が `"true"` になる assert を追加する。
 - CI: `apply` ジョブを削除し、`bootstrap` ジョブで上記を ubuntu / macOS の両方で実行する。
 
@@ -162,7 +170,7 @@ Linux の 3 パターンで diff し、差分がヘッダコメント(と zshrc 
 **実装時に最初に確認する未検証事項:**
 1. chezmoi が書いた既存ファイルを copy / template が `--force` なしで上書きできるか(e2e 2)。
 2. Tera と zsh の記法の衝突(`{#` など)や、空白制御の違い(同等性チェック)。
-3. oh-my-zsh の `lib/*.zsh` を `oh-my-zsh.sh` 抜きで読んだときに、エラーや欠ける機能が無いか(zsh スモークと下の検証項目)。
+3. oh-my-zsh 抜きで書き直した補完・キーバインド・履歴・ディレクトリ・見た目の設定が効いているか(zsh スモークと下の検証項目)。
 4. `mise activate zsh` の直後に、同じ zshrc 内で sheldon が PATH 上に見えるか。
 
 **zsh の検証項目(Docker の対話シェルで確認):** 起動時にエラーが出ない / alien のプロンプト / `gst` などの git エイリアス /
