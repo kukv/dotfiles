@@ -6,7 +6,6 @@
 [bootstrap.packages]
 # base
 "apt:acl" = "latest"
-"apt:apt-transport-https" = "latest"
 "apt:build-essential" = "latest"
 "apt:bzip2" = "latest"
 "apt:ca-certificates" = "latest"
@@ -32,7 +31,6 @@
 "apt:libgmp-dev" = "latest"
 "apt:libffi-dev" = "latest"
 "apt:autoconf" = "latest"
-"apt:rustc" = "latest"
 # ARM cross-compile toolchain
 "apt:qemu-system-arm" = "latest"
 "apt:g++-aarch64-linux-gnu" = "latest"

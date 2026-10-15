@@ -100,6 +100,10 @@ check_mac() {
   [ "$(mode "$h/.ssh/config")" = 600 ] || fail "ssh config mode"
   grep -qx 'export ALIEN_USE_NERD_FONT=1' "$h/.zshrc" || fail "Nerd Font on macOS"
   grep -q '^export SSH_AUTH_SOCK=' "$h/.zshrc" || fail "1Password agent on macOS"
+  # compinit runs inside `sheldon source`, so docker completions must join fpath before it.
+  docker_line="$(grep -n 'docker/completions' "$h/.zshrc" | cut -d: -f1)"
+  sheldon_line="$(grep -n 'sheldon source' "$h/.zshrc" | cut -d: -f1)"
+  if [ -z "$docker_line" ] || [ "$docker_line" -gt "$sheldon_line" ]; then fail "docker completions after compinit"; fi
   grep -qx "alias update_os='~/.local/share/dotfiles/bootstrap/scheduled-run.sh'" "$h/.zshrc" || fail "macOS update_os"
   if grep -q "alias ssh='ssh.exe'" "$h/.zshrc"; then fail "WSL ssh alias leaked into macOS"; fi
   [ "$(mode "$h/.ssh")" = 700 ] || fail "~/.ssh mode"
