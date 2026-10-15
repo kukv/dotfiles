@@ -38,7 +38,12 @@ jobs:
 
       - name: Install zsh
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y zsh
+        run: |
+          sudo apt-get update && sudo apt-get install -y zsh
+          # The runner's umask can leave /usr/share/zsh group-writable, which makes
+          # compaudit flag it and compinit prompt; show it, then make it root-only-writable.
+          ls -ld /usr/share/zsh /usr/share/zsh/vendor-completions
+          sudo chmod go-w /usr/share/zsh /usr/share/zsh/vendor-completions
 
       - name: zsh startup (sheldon plugins)
         run: tests/bootstrap/zsh.test.sh
