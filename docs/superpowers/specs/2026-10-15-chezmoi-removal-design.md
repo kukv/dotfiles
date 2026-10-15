@@ -202,3 +202,36 @@ os-setup のマシンが残ったまま main から `.chezmoiroot` を消すと�
 - `docs/setup/wsl-new.md`: 成功条件を `chezmoi diff` から `mise dot status --missing` に変え、`mise trust` を追加する。
 - `docs/setup/wsl-migration.md` と `docs/setup/mac.md` の移行の章: マージ時点で os-setup のマシンは残っていないため削除する。
 - 前提 spec の「将来フェーズ」に、本 spec へのリンクと「案 A は撤回して sheldon に変更」を追記する。
+
+## 検証結果
+
+実行日: 2026-10-16 / 検証対象: `origin/chezmoi-removal` の HEAD `2f8f7c8`(`91f4011` に main をマージしたもの)/ 環境: `tests/docker`(e2e サービス、Ubuntu 26.04、systemd)
+
+### Step 2: 新規構築 — 合格
+
+- `init.sh --env wsl --branch chezmoi-removal` は exit 0(1 回目は後述のネットワーク失敗、再実行で成功)。`mise vars` は exit 0。
+- `mise bootstrap status` は exit 0。dotfiles 12 件が `applied`(`~/.zshrc`、`~/.config/sheldon/plugins.toml` を含む)。
+- `mise dot status --missing` は `✓ 11 entries up to date`、`dot-exit=0`。
+- `zsh -lic` は終了コード 0、stderr は空。`gst` / `gl` / `gsw` / `md` のエイリアスが定義され、`sharehistory` と `autocd` が有効。
+- `dev.mise.mise-bootstrap.service` は `Result=success`、`ExecMainStatus=0`。
+- sheldon のプラグイン 5 件(zsh-autosuggestions / zsh-completions / zsh-history-substring-search / zsh-syntax-highlighting / alien)が `~/.local/share/sheldon/repos/github.com` に取得された。
+
+### Step 3: 移行(main → chezmoi-removal) — 合格
+
+- main で構築後に `chezmoi-removal` をチェックアウトして `dev.mise.mise-bootstrap.service` を起動した。`--force-dotfiles` は不要で、衝突は発生しなかった(`~/.zshrc` の `oh-my-zsh.sh` 参照は 1 件から 0 件に変わった)。
+- `mise dot status --missing` は `dot-exit=0`。
+- `~/.oh-my-zsh` は手つかずのまま残った(ディレクトリ自体の mtime と `oh-my-zsh.sh` の mtime が不変)。
+- `~/.gitconfig` / `~/.zshrc` / `~/.zprofile` は新規構築の結果と `diff -r` で一致(`same-as-fresh`)。
+- zsh は終了コード 0、stderr は空(下記 1 の再実行後)。
+
+### Step 4: 切り戻し(main に戻す) — 合格
+
+- `service` は `Result=success`、`ExecMainStatus=0`。`~/.zshrc` の `oh-my-zsh.sh` 参照は 1 件に戻った。
+- `chezmoi diff` は exit 0。差分はファイルのパーミッション(664 と 644 など、2271 件)のみで、内容の差分はない。
+- `zsh -lic "alias gst"` は終了コード 0、stderr は空。
+
+### 見つかった問題
+
+1. **sheldon の並列 clone が github.com への接続拒否で失敗することがある**(コードの不具合ではなく環境起因の可能性が高い)。新規構築の 1 回目と Step 3 の初回 service 起動で、5 件の並列 clone のうち 1 件が `failed to connect to github.com: Connection refused` で失敗し、`post-tools.sh` が exit 2 になった。再実行すると成功した。冪等で、再実行で回復する。失敗直後は未取得のプラグインを `.zshrc` 側の sheldon が clone するため、zsh の stderr に `CLONED` が出る。
+2. 手順書の `omz-untouched` 判定(`ls -la ~/.oh-my-zsh | head -3 | diff`)は、3 行目に `..`(= `$HOME`)の mtime を含むため、HOME 直下にファイルが増えると偽の差分になる。`~/.oh-my-zsh` 自身の mtime(`stat`)で比較すること。
+3. 切り戻し後の `chezmoi diff` にパーミッションのみの差分(2271 件)が出る。mise 側の配置でファイルのモードが 664 / 775 になっていることが原因とみられる。`chezmoi apply` で戻る。内容は一致しており、`diff-exit=0` の判定は満たす。
