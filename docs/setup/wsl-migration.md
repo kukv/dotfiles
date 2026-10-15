@@ -37,15 +37,25 @@ systemctl list-timers --all | grep os-setup
 
 最後の行で何も出なければよい。
 
-## 4. 秘密情報・vars・module を設定する
+## 4. extra_vars の値を移す
 
-旧環境の GitHub token を確認する。
+旧環境の extra_vars を表示する(token が画面に出るので注意)。
 
 ```bash
-grep github_token /etc/ansible/extra_vars.yaml
+cat /etc/ansible/extra_vars.yaml
 ```
 
-`bootstrap.env` を作り、確認した token を書く。
+各キーの移し先は次のとおり。以下の手順で順に移す。
+
+| extra_vars のキー | 移し先 |
+|---|---|
+| `github_token` | `~/.local/etc/bootstrap.env` の `MISE_GITHUB_TOKEN` |
+| `git.user.name` / `git.user.email` | mise vars `git_name` / `git_email` |
+| `git.use_1password` | module の選択(`false` なら work module) |
+| `git.signing_key_file` | mise vars `git_signing_key_file` |
+| `provisioning_schedule` | 移さない(週次固定に廃止) |
+
+`bootstrap.env` を作り、`github_token` の値を書く。
 
 ```bash
 mkdir -p ~/.local/etc
@@ -54,29 +64,32 @@ vi ~/.local/etc/bootstrap.env
 ```
 
 ```
-MISE_GITHUB_TOKEN=<token>
+MISE_GITHUB_TOKEN=<github_token の値>
 ```
 
-git の name / email を確認し、`mise vars prompt` の質問に表示された値を入力する。
+`mise vars prompt` の質問に `git.user.name` / `git.user.email` の値を入力する。
 
 ```bash
-grep -E 'git_name|git_email' ~/.config/chezmoi/chezmoi.toml
 ~/.local/bin/mise vars prompt
 ```
 
-module を選ぶ。
+module を選ぶ。`git.use_1password` が `true` または未設定なら次を実行する。
 
 ```bash
 printf 'env = ["wsl"]\n' > ~/.config/mise/miserc.local.toml
 ```
 
-work module を使うマシンは代わりに次を実行する。
+`git.use_1password` が `false` なら代わりに次を実行する(`use_1password` は module の `[vars]` で決まり、`mise vars` では上書きできない)。
 
 ```bash
 printf 'env = ["wsl", "work"]\n' > ~/.config/mise/miserc.local.toml
 ```
 
-work module で署名鍵を既定(`~/.ssh/git_signing_key.pub`)以外に置いている場合だけ、`~/.local/bin/mise vars git_signing_key_file=<パス>` も実行する。
+`git.signing_key_file` が設定されている場合だけ、その値で次を実行する。
+
+```bash
+~/.local/bin/mise vars git_signing_key_file=<signing_key_file の値>
+```
 
 ## 5. linuxbrew を外す
 

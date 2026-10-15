@@ -52,7 +52,7 @@ work module を使うマシンは `--env wsl,work` にする。
 
 - 最初の sudo でパスワードを 1 回聞かれる(以降は init.sh が `/etc/sudoers.d/<ユーザー名>` に NOPASSWD を書く)。
 - 途中で git の name / email を聞かれる(`~/.local/state/mise/vars.toml` に保存される)。
-- work module で署名鍵を既定(`~/.ssh/git_signing_key.pub`)以外に置く場合は、完了後に `~/.local/bin/mise vars git_signing_key_file=<パス>` を実行して 7 の `update_os` で反映する。
+- 署名鍵を既定(`~/.ssh/git_signing_key.pub`)以外に置く場合は、完了後に `~/.local/bin/mise vars git_signing_key_file=<パス>` を実行して 7 の `update_os` で反映する。
 
 ## 5. GitHub token を保存する
 
