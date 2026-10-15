@@ -182,19 +182,3 @@ herdr plugin list
 
 `/etc/systemd/resolved.conf` に Ansible の `# BEGIN DNS SETUP` ブロックが残るが、drop-in と同じ値なので無害。消す場合は手で削除する。
 問題が無ければ `~/migration-backup` も削除してよい。
-
-## 付録: チェックアウトが旧パス(`~/.local/share/mise/bootstrap-repo`)にある場合
-
-以前の手順で移行し、チェックアウトが旧パスに残っているマシンだけ実行する。`~/.local/share/dotfiles` に移して再適用する。
-
-```bash
-mise trust --untrust ~/.local/share/mise/bootstrap-repo
-mv ~/.local/share/mise/bootstrap-repo ~/.local/share/dotfiles
-git -C ~/.local/share/dotfiles pull --ff-only
-cd ~/.local/share/dotfiles
-MISE_AUTO_ENV=true mise trust .
-cd ~
-MISE_AUTO_ENV=true mise bootstrap --from https://github.com/kukv/dotfiles.git --from-dir ~/.local/share/dotfiles
-```
-
-確認は 7 と同じ(`bootstrap status` の systemd unit が新パスを指していること)。
