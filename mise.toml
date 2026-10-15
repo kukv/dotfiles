@@ -1,0 +1,38 @@
+# mise bootstrap project for kukv/dotfiles.
+# Base: settings every machine shares. OS differences live in mise.{linux,macos}.toml,
+# machine roles in modules (mise.wsl.toml, mise.work.toml) selected per machine in
+# ~/.config/mise/miserc.local.toml. See docs/superpowers/specs/2026-10-15-mise-bootstrap-migration-design.md
+
+# ==========================================================================
+# vars (per-machine answers are saved by `mise bootstrap --prompt-vars`)
+# git_name / git_email default to "" so other mise commands work without answers;
+# bootstrap/chezmoi-apply.sh fails if they are still empty.
+# ==========================================================================
+[vars.git_name]
+prompt = "Git user.name"
+default = ""
+
+[vars.git_email]
+prompt = "Git user.email"
+default = ""
+
+# Overridden to "false" by mise.work.toml (company PC signs with a local key).
+[vars.use_1password]
+default = "true"
+
+# Empty: chezmoi templates fall back to <homeDir>/.ssh/git_signing_key.pub.
+[vars.git_signing_key_file]
+default = ""
+
+# ==========================================================================
+# chezmoi (kept for now; see spec "将来フェーズ")
+# ==========================================================================
+[bootstrap.hooks.pre-tools]
+run = "GIT_NAME='{{ vars.git_name }}' GIT_EMAIL='{{ vars.git_email }}' USE_1PASSWORD='{{ vars.use_1password }}' GIT_SIGNING_KEY_FILE='{{ vars.git_signing_key_file }}' '{{ config_root }}/bootstrap/chezmoi-apply.sh' '{{ config_root }}'"
+
+# ==========================================================================
+# bootstrap task (runs last in `mise bootstrap`, with [tools] on PATH)
+# ==========================================================================
+[tasks.bootstrap]
+description = "Post-tools setup: corepack, herdr plugins, Claude skills, Claude Code"
+run = ["'{{ config_root }}/bootstrap/post-tools.sh'"]

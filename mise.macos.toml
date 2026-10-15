@@ -1,0 +1,59 @@
+# macOS-only bootstrap settings (loaded automatically on macOS).
+
+# ==========================================================================
+# packages
+# ==========================================================================
+[bootstrap.packages]
+"brew:mise" = "latest"
+"brew:git" = "latest"
+"brew:tree" = "latest"
+"brew:nkf" = "latest"
+"brew:ffmpeg" = "latest"
+"brew:plantuml" = "latest"
+"brew:nmap" = "latest"
+"brew:gnupg" = "latest"
+"brew:mas" = "latest"
+
+"brew-cask:font-hack-nerd-font" = "latest"
+"brew-cask:google-chrome" = "latest"
+"brew-cask:visual-studio-code" = "latest"
+"brew-cask:raycast" = "latest"
+"brew-cask:1password" = "latest"
+"brew-cask:1password-cli" = "latest"
+"brew-cask:jetbrains-toolbox" = "latest"
+"brew-cask:slack" = "latest"
+"brew-cask:notion" = "latest"
+"brew-cask:discord" = "latest"
+"brew-cask:iterm2" = "latest"
+"brew-cask:spotify" = "latest"
+"brew-cask:clipy" = "latest"
+"brew-cask:daisydisk" = "latest"
+"brew-cask:thebrowsercompany-dia" = "latest"
+"brew-cask:onyx" = "latest"
+"brew-cask:raspberry-pi-imager" = "latest"
+"brew-cask:vnc-viewer" = "latest"
+"brew-cask:drawio" = "latest"
+"brew-cask:docker-desktop" = "latest"
+"brew-cask:linear" = "latest"
+# pkg/installer casks that require sudo are NOT managed here (a scheduled run
+# cannot answer the password prompt). Install/upgrade manually:
+#   cloudflare-warp, logi-options+, microsoft-office, onedrive, zoom
+# LocalStack Desktop is not distributed via Homebrew or the App Store.
+
+# Mac App Store (requires App Store sign-in)
+"mas:539883307" = "latest"  # LINE
+"mas:302584613" = "latest"  # Amazon Kindle
+"mas:497799835" = "latest"  # Xcode
+
+# ==========================================================================
+# hooks
+# ==========================================================================
+[bootstrap.hooks.post-packages]
+run = "'{{ config_root }}/bootstrap/macos-brew.sh'"
+
+# ==========================================================================
+# scheduled re-provisioning (Sundays 21:00)
+# ==========================================================================
+[bootstrap.macos.launchd.agents.mise-bootstrap]
+program = "~/.local/share/dotfiles/bootstrap/scheduled-run.sh"
+start_calendar_interval = [{ weekday = 0, hour = 21, minute = 0 }]

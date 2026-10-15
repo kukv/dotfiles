@@ -1,0 +1,19 @@
+---
+services:
+  dev:
+    build:
+      context: "."
+      target: "dev"
+    hostname: "mise-dev"
+    privileged: true
+    tty: true
+    volumes:
+      - "../..:/dotfiles:ro"
+
+  e2e:
+    build:
+      context: "."
+      target: "base"
+    hostname: "mise-e2e"
+    privileged: true
+    tty: true

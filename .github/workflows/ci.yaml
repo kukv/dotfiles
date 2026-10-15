@@ -65,6 +65,11 @@ jobs:
           if grep -q 'MacOS/op-ssh-sign' "$DEST/.gitconfig"; then echo 'macOS signer leaked into Linux gitconfig' >&2; exit 1; fi
           test ! -f "$DEST/.ssh/config"
 
+      - name: Assert no os-setup / linuxbrew remnants
+        run: |
+          if grep -q linuxbrew "$DEST/.zprofile"; then echo 'linuxbrew left in zprofile' >&2; exit 1; fi
+          if grep -q 'os-setup' "$DEST/.zshrc"; then echo 'os-setup reference left in zshrc' >&2; exit 1; fi
+
       - name: chezmoi apply — local-key (no 1Password) variant
         if: runner.os == 'Linux'
         run: |
@@ -102,3 +107,36 @@ jobs:
           grep -q 'MacOS/op-ssh-sign' "$DEST/.gitconfig"
           if grep -q 'op-ssh-sign-wsl.exe' "$DEST/.gitconfig"; then echo 'WSL signer leaked into macOS gitconfig' >&2; exit 1; fi
           test -f "$DEST/.ssh/config"
+
+  bootstrap:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    env:
+      MISE_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install mise
+        run: |
+          curl -fsSL https://mise.run | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: shellcheck bootstrap scripts
+        if: runner.os == 'Linux'
+        run: git ls-files -z 'bootstrap/*.sh' 'tests/bootstrap/*.sh' | xargs -0 -r shellcheck
+
+      - name: mise bootstrap plan (every machine selection)
+        run: tests/bootstrap/plan.sh
+
+      - name: chezmoi-apply.sh
+        run: tests/bootstrap/chezmoi-apply.test.sh
+
+      - name: init.sh
+        run: tests/bootstrap/init.test.sh
