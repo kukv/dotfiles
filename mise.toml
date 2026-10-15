@@ -32,6 +32,13 @@ default = "false"
 # dotfiles (copied / rendered into ~ by the dotfiles step, before tools).
 # Sources live in home/ under their real names; *.tera files are templates.
 # ==========================================================================
+# git_name / git_email default to "" (see [vars]); stop before rendering ~/.gitconfig without them.
+[bootstrap.hooks.pre-dotfiles]
+run = "test -n '{{ vars.git_name }}' && test -n '{{ vars.git_email }}' || { echo 'error: git_name / git_email are empty. Run `mise vars prompt` (or re-run bootstrap with --prompt-vars).' >&2; exit 1; }"
+
+[bootstrap.hooks.post-dotfiles]
+run = "'{{ config_root }}/bootstrap/local-files.sh'"
+
 [dotfiles]
 "~/.zshrc" = { source = "home/dot_zshrc.tera", mode = "template" }
 "~/.config/sheldon/plugins.toml" = { source = "home/dot_config/sheldon/plugins.toml", mode = "copy" }

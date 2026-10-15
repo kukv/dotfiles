@@ -119,4 +119,21 @@ case "$(uname -s)" in
     ;;
 esac
 
+echo "== bootstrap: empty git_name stops before the dotfiles step"
+h="$tmp/noname"; mkdir -p "$h"
+in_home "$h" mise trust . >/dev/null 2>&1
+rc=0
+in_home "$h" mise bootstrap --only dotfiles --yes >"$tmp/noname.out" 2>&1 || rc=$?
+[ "$rc" -ne 0 ] || fail "bootstrap must fail when git_name is empty"
+[ ! -e "$h/.gitconfig" ] || fail "dotfiles must not be applied when git_name is empty"
+grep -q 'mise vars prompt' "$tmp/noname.out" || fail "message must mention mise vars prompt"
+
+echo "== bootstrap: local files are created once and never overwritten"
+h="$tmp/local"; mkdir -p "$h"
+echo keep > "$h/.zprofile.local"
+in_home "$h" mise trust . >/dev/null 2>&1
+named "$h" mise bootstrap --only dotfiles --yes >/dev/null
+grep -q 'machine-local' "$h/.zshrc.local" || fail ".zshrc.local not created"
+[ "$(cat "$h/.zprofile.local")" = keep ] || fail ".zprofile.local was overwritten"
+
 echo PASS

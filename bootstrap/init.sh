@@ -91,7 +91,7 @@ if [ ! -f "$HOME/.local/etc/bootstrap.env" ]; then
 fi
 chmod 600 "$HOME/.local/etc/bootstrap.env"
 
-# Hooks (chezmoi-apply.sh's `mise exec`) look up mise on PATH, which a fresh machine does not have yet.
+# Hooks and the bootstrap task (`mise exec`) look up mise on PATH, which a fresh machine does not have yet.
 PATH="$(dirname "$MISE"):$PATH"
 export PATH
 
