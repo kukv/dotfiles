@@ -148,13 +148,16 @@ chmod -R go-w /opt/homebrew/share/zsh
 - `Ctrl-R`(peco の履歴検索)と `Ctrl-]`(ghq のリポジトリ選択)が動く
 - git の操作ができ、コミットに 1Password で署名が付く
 
+1Password の Mac には `allowed_signers` が無く、`git log --show-signature` では検証できない(`gpg.ssh.allowedSignersFile needs to be configured` と出る)。
+代わりに、ブランチを動かさずに署名付きのコミットオブジェクトを作り、署名が付くことを確かめる。
+
 ```bash
-cd ~/.local/share/dotfiles && git log --show-signature -1; cd ~
+cd ~/.local/share/dotfiles && git commit-tree -S HEAD^{tree} -m signing-test | xargs git cat-file -p | grep -c gpgsig; cd ~
 ```
 
 期待値:
 
-- `Good "git" signature` が出る
+- 1Password の承認ダイアログが出て、承認すると `1` が出る
 
 ## 切り戻し(問題があったとき)
 
