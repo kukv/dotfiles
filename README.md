@@ -40,7 +40,7 @@ GitHub token は `~/.local/etc/bootstrap.env`(0600)に `MISE_GITHUB_TOKEN=…` /
 
 詳しい手順は `docs/setup/` を参照してください。
 - [WSL 新規](docs/setup/wsl-new.md)
-- [Mac](docs/setup/mac.md)(未整備)
+- [Mac 新規](docs/setup/mac-new.md)
 
 ### 再適用
 週次で自動実行されます(Linux: systemd user timer、macOS: LaunchAgent)。手動では `update_os`。

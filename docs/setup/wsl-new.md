@@ -3,11 +3,11 @@
 まっさらな WSL ディストリビューションに、この dotfiles の mise bootstrap を適用する手順。
 
 - コマンドはそのまま貼れるように書いてある。シェル変数は使わない(シェルを開き直しても続きから実行できる)。
-- WSL 側のコマンドは自分のユーザーで実行する(root では実行しない。必要な箇所は sudo を使う)。
+- WSL 側のコマンドは自分のユーザーで実行する。root では実行せず、必要な箇所だけ sudo を使う。
 
 ## 1. WSL ディストリビューションを用意する
 
-PowerShell で実行する(Ubuntu 以外を使う場合は `-d` の値を読み替える)。
+PowerShell で実行する。Ubuntu 以外を使う場合は `-d` の値を読み替える。
 
 ```powershell
 wsl --install -d Ubuntu
@@ -21,7 +21,11 @@ wsl --install -d Ubuntu
 [ -d /run/systemd/system ] && echo systemd-ok
 ```
 
-`systemd-ok` が出ない場合は `/etc/wsl.conf` に次を書き、PowerShell で `wsl --shutdown` してから WSL を開き直す。
+期待値:
+
+- `systemd-ok` が出る
+
+出ない場合は `/etc/wsl.conf` に次を書き、PowerShell で `wsl --shutdown` を実行してから WSL を開き直す。
 
 ```bash
 sudo vi /etc/wsl.conf
@@ -34,8 +38,8 @@ systemd=true
 
 ## 3. (任意)GitHub token を用意する
 
-`bootstrap.env` は週次実行(`update_os` を含む)でだけ読まれる。初回実行には効かない。
-初回から token を使いたい場合は、4 を実行するシェルで先に export しておく。
+`bootstrap.env` は週次実行(`update_os` を含む)でしか読まれず、初回実行には効かない。
+初回から token を使いたい場合は、手順 4 を実行するシェルで先に export しておく。
 
 ```bash
 export MISE_GITHUB_TOKEN=<token>
@@ -43,15 +47,15 @@ export MISE_GITHUB_TOKEN=<token>
 
 ## 4. init.sh を実行する
 
+work module を使うマシンは `--env wsl,work` にする。
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/kukv/dotfiles/main/bootstrap/init.sh | sh -s -- --env wsl
 ```
 
-work module を使うマシンは `--env wsl,work` にする。
-
-- 最初の sudo でパスワードを 1 回聞かれる(以降は init.sh が `/etc/sudoers.d/<ユーザー名>` に NOPASSWD を書く)。
+- 最初の sudo でパスワードを 1 回聞かれる。以降は init.sh が `/etc/sudoers.d/<ユーザー名>` に NOPASSWD を書く。
 - 途中で git の name / email を聞かれる(`~/.local/state/mise/vars.toml` に保存される)。
-- 署名鍵を既定(`~/.ssh/git_signing_key.pub`)以外に置く場合は、完了後に `~/.local/bin/mise vars git_signing_key_file=<パス>` を実行して 7 の `update_os` で反映する。
+- 署名鍵を既定(`~/.ssh/git_signing_key.pub`)以外に置く場合は、完了後に `~/.local/bin/mise vars git_signing_key_file=<パス>` を実行し、手順 7 の `update_os` で反映する。
 
 ## 5. GitHub token を保存する
 
