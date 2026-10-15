@@ -136,4 +136,11 @@ named "$h" mise bootstrap --only dotfiles --yes >/dev/null
 grep -q 'machine-local' "$h/.zshrc.local" || fail ".zshrc.local not created"
 [ "$(cat "$h/.zprofile.local")" = keep ] || fail ".zprofile.local was overwritten"
 
+echo "== bootstrap: a quote in git_name is passed through safely"
+h="$tmp/quote"; mkdir -p "$h"
+in_home "$h" mise trust . >/dev/null 2>&1
+in_home "$h" env git_name="O'Brien" git_email=ci@example.com mise bootstrap --only dotfiles --yes >/dev/null \
+  || fail "bootstrap must succeed with a quote in git_name"
+grep -qx "    name = O'Brien" "$h/.gitconfig" || fail ".gitconfig must contain the quoted name"
+
 echo PASS

@@ -33,8 +33,9 @@ default = "false"
 # Sources live in home/ under their real names; *.tera files are templates.
 # ==========================================================================
 # git_name / git_email default to "" (see [vars]); stop before rendering ~/.gitconfig without them.
+# Emptiness is decided in the template so the values never reach the shell (quotes in a name are safe).
 [bootstrap.hooks.pre-dotfiles]
-run = "test -n '{{ vars.git_name }}' && test -n '{{ vars.git_email }}' || { echo 'error: git_name / git_email are empty. Run `mise vars prompt` (or re-run bootstrap with --prompt-vars).' >&2; exit 1; }"
+run = "{% if vars.git_name == '' or vars.git_email == '' %}echo 'error: git_name / git_email are empty. Run `mise vars prompt` (or re-run bootstrap with --prompt-vars).' >&2; exit 1{% else %}true{% endif %}"
 
 [bootstrap.hooks.post-dotfiles]
 run = "'{{ config_root }}/bootstrap/local-files.sh'"
