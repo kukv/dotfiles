@@ -1,4 +1,4 @@
-# Managed by chezmoi — edit with: chezmoi edit ~/.config/mise/config.toml
+# Managed by mise [dotfiles] — edit home/.config/mise/config.toml in kukv/dotfiles
 # ==========================================================================
 # settings
 # ==========================================================================
@@ -143,8 +143,6 @@ eza = "latest"
 bat = "latest"
 zoxide = "latest"
 ghq = "latest"
-# bootstrap の hook は `mise exec chezmoi@<固定版>` で別に実行する。こちらは手元の chezmoi edit / diff 用
-chezmoi = "latest"
 "github:kukv/octoscope" = "latest"
 
 # [tools.aws]

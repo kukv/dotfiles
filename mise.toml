@@ -6,7 +6,7 @@
 # ==========================================================================
 # vars (per-machine answers are saved by `mise bootstrap --prompt-vars`)
 # git_name / git_email default to "" so other mise commands work without answers;
-# bootstrap/chezmoi-apply.sh fails if they are still empty.
+# The pre-dotfiles hook fails if they are still empty.
 # ==========================================================================
 [vars.git_name]
 prompt = "Git user.name"
@@ -20,15 +20,23 @@ default = ""
 [vars.use_1password]
 default = "true"
 
-# Empty: chezmoi templates fall back to <homeDir>/.ssh/git_signing_key.pub.
+# Empty: home/.gitconfig.tera falls back to ~/.ssh/git_signing_key.pub.
 [vars.git_signing_key_file]
 default = ""
 
 # ==========================================================================
-# chezmoi (kept for now; see spec "将来フェーズ")
+# dotfiles (copied / rendered into ~ by the dotfiles step, before tools).
+# Sources live in home/ under their real names; *.tera files are templates.
 # ==========================================================================
-[bootstrap.hooks.pre-tools]
-run = "GIT_NAME='{{ vars.git_name }}' GIT_EMAIL='{{ vars.git_email }}' USE_1PASSWORD='{{ vars.use_1password }}' GIT_SIGNING_KEY_FILE='{{ vars.git_signing_key_file }}' '{{ config_root }}/bootstrap/chezmoi-apply.sh' '{{ config_root }}'"
+[dotfiles]
+"~/.claude" = { source = "home/.claude", mode = "copy" }
+"~/.codex/config.toml" = { source = "home/.codex/config.toml", mode = "copy" }
+"~/.config/git/ignore" = { source = "home/.config/git/ignore", mode = "copy" }
+"~/.config/herdr/config.toml" = { source = "home/.config/herdr/config.toml", mode = "copy" }
+"~/.config/mise/config.toml" = { source = "home/.config/mise/config.toml", mode = "copy" }
+# chezmoi never deployed these (it ignores dot-prefixed sources); keep it that way.
+"~/.config/nvim" = { source = "home/.config/nvim", mode = "copy", exclude = ["/.gitignore", "/.neoconf.json"] }
+"~/Library/Application Support/iTerm2/DynamicProfiles/default_profile.json" = { source = "home/Library/Application Support/iTerm2/DynamicProfiles/default_profile.json", mode = "copy", variants = [{ os = "macos" }] }
 
 # ==========================================================================
 # bootstrap task (runs last in `mise bootstrap`, with [tools] on PATH)
