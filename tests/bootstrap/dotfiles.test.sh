@@ -45,6 +45,10 @@ check_common() {
   grep -qx '    email = ci@example.com' "$h/.gitconfig" || fail ".gitconfig email"
   if grep -q linuxbrew "$h/.zprofile"; then fail "linuxbrew left in .zprofile"; fi
   if grep -q chezmoi "$h/.gitconfig" "$h/.zprofile"; then fail "chezmoi reference left"; fi
+  grep -qx 'eval "$(sheldon source)"' "$h/.zshrc" || fail ".zshrc does not load sheldon"
+  if grep -q 'oh-my-zsh.sh' "$h/.zshrc"; then fail "oh-my-zsh.sh still sourced"; fi
+  if grep -q 'os-setup' "$h/.zshrc"; then fail "os-setup reference left in .zshrc"; fi
+  [ -f "$h/.config/sheldon/plugins.toml" ] || fail "sheldon plugins.toml missing"
 }
 
 check_linux() {
@@ -57,6 +61,9 @@ check_linux() {
   grep -qx 'export JOBMAX=$(nproc)' "$h/.zprofile" || fail "linux JOBMAX"
   [ ! -e "$h/.ssh/config" ] || fail ".ssh/config deployed on Linux"
   [ ! -e "$h/.ssh/allowed_signers" ] || fail "allowed_signers on a 1Password machine"
+  grep -qx "alias update_os='systemctl --user start dev.mise.mise-bootstrap.service'" "$h/.zshrc" || fail "linux update_os"
+  if grep -q "alias ssh='ssh.exe'" "$h/.zshrc"; then fail "WSL ssh alias leaked into native Linux"; fi
+  if grep -q 'ALIEN_USE_NERD_FONT' "$h/.zshrc"; then fail "Nerd Font on Linux"; fi
 }
 
 check_wsl() {
@@ -66,6 +73,7 @@ check_wsl() {
   grep -qx '    program = op-ssh-sign-wsl.exe' "$h/.gitconfig" || fail "WSL signer"
   if grep -q 'MacOS/op-ssh-sign' "$h/.gitconfig"; then fail "macOS signer leaked into WSL"; fi
   [ ! -e "$h/.ssh/config" ] || fail ".ssh/config deployed on WSL"
+  grep -qx "alias ssh='ssh.exe'" "$h/.zshrc" || fail "WSL ssh alias"
 }
 
 check_work() {
@@ -75,6 +83,7 @@ check_work() {
   if grep -q 'op-ssh-sign' "$h/.gitconfig"; then fail "1Password signer leaked into local-key gitconfig"; fi
   grep -qx '    allowedSignersFile = '"$h"'/.ssh/allowed_signers' "$h/.gitconfig" || fail "allowedSignersFile"
   grep -q '^ci@example.com ssh-ed25519 ' "$h/.ssh/allowed_signers" || fail "allowed_signers not generated from the key"
+  grep -qx "alias ssh='ssh.exe'" "$h/.zshrc" || fail "WSL ssh alias"
   [ "$(mode "$h/.ssh")" = 700 ] || fail "~/.ssh mode"
 }
 
@@ -86,6 +95,10 @@ check_mac() {
   grep -qx 'eval "$(/opt/homebrew/bin/brew shellenv)"' "$h/.zprofile" || fail "brew shellenv"
   grep -qx 'Include ~/.ssh/1Password/config' "$h/.ssh/config" || fail "ssh config Include"
   [ "$(mode "$h/.ssh/config")" = 600 ] || fail "ssh config mode"
+  grep -qx 'export ALIEN_USE_NERD_FONT=1' "$h/.zshrc" || fail "Nerd Font on macOS"
+  grep -q '^export SSH_AUTH_SOCK=' "$h/.zshrc" || fail "1Password agent on macOS"
+  grep -qx "alias update_os='~/.local/share/dotfiles/bootstrap/scheduled-run.sh'" "$h/.zshrc" || fail "macOS update_os"
+  if grep -q "alias ssh='ssh.exe'" "$h/.zshrc"; then fail "WSL ssh alias leaked into macOS"; fi
   [ "$(mode "$h/.ssh")" = 700 ] || fail "~/.ssh mode"
 }
 

@@ -33,6 +33,8 @@ default = "false"
 # Sources live in home/ under their real names; *.tera files are templates.
 # ==========================================================================
 [dotfiles]
+"~/.zshrc" = { source = "home/dot_zshrc.tera", mode = "template" }
+"~/.config/sheldon/plugins.toml" = { source = "home/dot_config/sheldon/plugins.toml", mode = "copy" }
 "~/.zprofile" = { source = "home/dot_zprofile.tera", mode = "template" }
 "~/.gitconfig" = { source = "home/dot_gitconfig.tera", mode = "template" }
 "~/.ssh" = { permissions = "0700" }

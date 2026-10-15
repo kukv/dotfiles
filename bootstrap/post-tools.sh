@@ -12,6 +12,10 @@ for shim in "$HOME"/.local/share/mise/installs/node/*/bin/pnpm; do
   fi
 done
 
+# zsh plugins: fetch them here (plugins.toml is pinned) so a new shell does not
+# clone anything at startup.
+sheldon lock
+
 # herdr plugins: "<plugin_id> <repo>". Install dir layout differs across herdr
 # versions, so ask herdr what is installed. kukv.github-dash (moved to the
 # octoscope tool) and official.browser (deprecated upstream) no longer ship a
@@ -24,7 +28,7 @@ hunk.diff edmundmiller/herdr-plugin-hunk
 EOT
 
 # Claude Code skills: "<skill> <repo>". hunk-review is intentionally absent:
-# the self-made loader in ~/.claude/skills/hunk-review (chezmoi) matches the
+# the self-made loader in ~/.claude/skills/hunk-review (mise [dotfiles]) matches the
 # mise-managed npm:hunkdiff version.
 while read -r name repo; do
   [ -e "$HOME/.claude/skills/$name" ] ||

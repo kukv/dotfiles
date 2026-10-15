@@ -1,27 +1,14 @@
-# Managed by chezmoi — edit with: chezmoi edit ~/.zshrc
+# Managed by mise [dotfiles] — edit home/dot_zshrc.tera in kukv/dotfiles
 # Machine-local, untracked overrides go in ~/.zshrc.local
 
 # ==========================================================================
-# = Oh-My-Zsh
+# = mise
 # ==========================================================================
-export ZSH="$HOME/.oh-my-zsh"
-ZSH_THEME="alien/alien"
-
-plugins=(
-    git
-    zsh-syntax-highlighting
-    zsh-completions
-    zsh-autosuggestions
-    zsh-history-substring-search
-)
-
-fpath+=$ZSH/custom/plugins/zsh-completions/src
-autoload -U compinit && compinit
-
-source $ZSH/oh-my-zsh.sh
+# Before sheldon below: sheldon is installed as a mise tool.
+eval "$(mise activate zsh)"
 
 # ==========================================================================
-# = Oh-My-Zsh theme (alien)
+# = alien theme (read when sheldon loads it)
 # ==========================================================================
 export ALIEN_SECTIONS_LEFT=(
     time
@@ -39,29 +26,28 @@ export ALIEN_SECTIONS_LEFT=(
 export ALIEN_SECTION_TIME_FORMAT="%Y-%m-%d %H:%M:%S"
 export ALIEN_SECTION_USER_HOST=1
 export ALIEN_THEME="blue"
-{{- if eq .chezmoi.os "darwin" }}
+{%- if os() == "macos" %}
 export ALIEN_USE_NERD_FONT=1
-{{- end }}
-{{ if eq .chezmoi.os "darwin" }}
-{{- /* use_1password is seeded by bootstrap/chezmoi-apply.sh; default to 1Password when absent (chezmoi runs missingkey=error) */ -}}
-{{- $op := true -}}
-{{- if hasKey . "use_1password" }}{{ $op = .use_1password }}{{ end -}}
-{{- if $op }}
+{%- endif %}
+
+# ==========================================================================
+# = zsh plugins (sheldon: ~/.config/sheldon/plugins.toml)
+# ==========================================================================
+# oh-my-zsh's lib/*.zsh keeps its caches here (oh-my-zsh's own loader used to set it).
+export ZSH_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
+eval "$(sheldon source)"
+{% if os() == "macos" %}
+{%- if vars.use_1password == "true" %}
 # ==========================================================================
 # = 1Password SSH agent (macOS)
 # ==========================================================================
 export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
-{{ end }}
+{% endif %}
 # ==========================================================================
 # = Docker completions (macOS)
 # ==========================================================================
 fpath=(${HOME}/.docker/completions $fpath)
-{{- end }}
-
-# ==========================================================================
-# = mise
-# ==========================================================================
-eval "$(mise activate zsh)"
+{%- endif %}
 
 # ==========================================================================
 # = peco
@@ -107,21 +93,20 @@ alias cdh='cd ~'
 alias v='nvim'
 alias cc='claude'
 alias ccw='claude -w'
-{{- if eq .chezmoi.os "darwin" }}
+{%- if os() == "macos" %}
 # provision this machine now (mise bootstrap; log: ~/.local/log/mise-bootstrap/)
 alias update_os='~/.local/share/dotfiles/bootstrap/scheduled-run.sh'
-{{- else if eq .chezmoi.os "linux" }}
+{%- elif os() == "linux" %}
 # provision this machine now (mise bootstrap user unit; log: journalctl --user -u dev.mise.mise-bootstrap)
 alias update_os='systemctl --user start dev.mise.mise-bootstrap.service'
-{{- end }}
-{{- if (index .chezmoi.kernel "osrelease" | default "" | lower | contains "microsoft") }}
+{%- endif %}
+{%- if vars.is_wsl == "true" %}
 
 # WSL only: route ssh through the Windows host (1Password lives on the Windows side).
-# Detect via the kernel string — .chezmoi.os is "linux" on native Linux too.
 alias ssh='ssh.exe'
 alias ssh-add='ssh-add.exe'
 alias scp='scp.exe'
-{{- end }}
+{%- endif %}
 
 # ==========================================================================
 # = Zsh history
