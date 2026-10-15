@@ -182,7 +182,7 @@ Linux の 3 パターンで diff し、差分がヘッダコメント(と zshrc 
 os-setup のマシンが残ったまま main から `.chezmoiroot` を消すと、os-setup の chezmoi がリポジトリのルートをソースとして解釈し、
 `~/mise.toml` などを ~ に撒くため。Mac は先に `docs/setup/mac.md` を整備する。本ブランチの開発は並行して進める。
 
-**各マシンの移行**(個人 WSL → 会社 WSL → Mac。手順書 `docs/setup/chezmoi-removal.md` を新規作成):
+**各マシンの移行**(個人 WSL → 会社 WSL → Mac。手順書 `docs/setup/{wsl,mac}-chezmoi-removal.md` を新規作成):
 1. バックアップ: `~/.gitconfig` `~/.zshrc` `~/.zprofile` `~/.ssh/config` `~/.ssh/allowed_signers` `~/.claude/settings.json`
    `~/.codex/config.toml` `~/.config/mise/config.toml`
 2. `~/.local/share/dotfiles` で `fetch` → `checkout <作業ブランチ>`(移行期間中の週次実行はこのブランチを追従する)

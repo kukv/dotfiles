@@ -1,6 +1,7 @@
-# chezmoi 撤去の移行手順(chezmoi → mise `[dotfiles]`、oh-my-zsh → sheldon)
+# WSL chezmoi 撤去の移行手順(chezmoi → mise `[dotfiles]`、oh-my-zsh → sheldon)
 
-mise bootstrap で動いているマシンを、chezmoi を使わない構成(作業ブランチ `chezmoi-removal`)に切り替える手順。
+mise bootstrap で動いている WSL を、chezmoi を使わない構成(作業ブランチ `chezmoi-removal`)に切り替える手順。
+Mac は [mac-chezmoi-removal.md](mac-chezmoi-removal.md) を使う。
 個人 WSL → 会社 WSL → Mac の順に行い、3 台すべてで完了してから `chezmoi-removal` を main にマージする。
 
 - 前提: そのマシンが os-setup から mise bootstrap に移行済みであること(`~/.local/share/dotfiles` がある)。
@@ -58,21 +59,10 @@ git の name / email、署名の設定、ssh の設定が変わっていない�
 
 ```bash
 update_os
-```
-
-WSL:
-
-```bash
 journalctl --user -u dev.mise.mise-bootstrap -n 50 --no-pager
 ```
 
-Mac:
-
-```bash
-tail -n 50 ~/.local/log/mise-bootstrap/$(date +%Y%m%d).log
-```
-
-期待値: 末尾が成功で終わっている(WSL は `Finished`)。
+期待値: 末尾が成功で終わっている(`Finished`)。
 
 ## 5. 成功条件を確認する
 
