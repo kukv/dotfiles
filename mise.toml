@@ -20,22 +20,31 @@ default = ""
 [vars.use_1password]
 default = "true"
 
-# Empty: home/.gitconfig.tera falls back to ~/.ssh/git_signing_key.pub.
+# Empty: home/dot_gitconfig.tera falls back to ~/.ssh/git_signing_key.pub.
 [vars.git_signing_key_file]
 default = ""
+
+# Overridden to "true" by mise.wsl.toml (templates route ssh / signing through Windows).
+[vars.is_wsl]
+default = "false"
 
 # ==========================================================================
 # dotfiles (copied / rendered into ~ by the dotfiles step, before tools).
 # Sources live in home/ under their real names; *.tera files are templates.
 # ==========================================================================
 [dotfiles]
-"~/.claude" = { source = "home/.claude", mode = "copy" }
-"~/.codex/config.toml" = { source = "home/.codex/config.toml", mode = "copy" }
-"~/.config/git/ignore" = { source = "home/.config/git/ignore", mode = "copy" }
-"~/.config/herdr/config.toml" = { source = "home/.config/herdr/config.toml", mode = "copy" }
-"~/.config/mise/config.toml" = { source = "home/.config/mise/config.toml", mode = "copy" }
+"~/.zprofile" = { source = "home/dot_zprofile.tera", mode = "template" }
+"~/.gitconfig" = { source = "home/dot_gitconfig.tera", mode = "template" }
+"~/.ssh" = { permissions = "0700" }
+"~/.ssh/config" = { source = "home/dot_ssh/config.tera", mode = "template", permissions = "0600", variants = [{ os = "macos" }] }
+"~/.ssh/allowed_signers" = { source = "home/dot_ssh/allowed_signers.tera", mode = "template", remove_empty = true }
+"~/.claude" = { source = "home/dot_claude", mode = "copy" }
+"~/.codex/config.toml" = { source = "home/dot_codex/config.toml", mode = "copy" }
+"~/.config/git/ignore" = { source = "home/dot_config/git/ignore", mode = "copy" }
+"~/.config/herdr/config.toml" = { source = "home/dot_config/herdr/config.toml", mode = "copy" }
+"~/.config/mise/config.toml" = { source = "home/dot_config/mise/config.toml", mode = "copy" }
 # chezmoi never deployed these (it ignores dot-prefixed sources); keep it that way.
-"~/.config/nvim" = { source = "home/.config/nvim", mode = "copy", exclude = ["/.gitignore", "/.neoconf.json"] }
+"~/.config/nvim" = { source = "home/dot_config/nvim", mode = "copy", exclude = ["/.gitignore", "/.neoconf.json"] }
 "~/Library/Application Support/iTerm2/DynamicProfiles/default_profile.json" = { source = "home/Library/Application Support/iTerm2/DynamicProfiles/default_profile.json", mode = "copy", variants = [{ os = "macos" }] }
 
 # ==========================================================================

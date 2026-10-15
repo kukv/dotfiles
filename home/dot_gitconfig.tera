@@ -1,0 +1,40 @@
+{%- set op = vars.use_1password == "true" -%}
+{%- set wsl = vars.is_wsl == "true" -%}
+{%- set key_file = vars.git_signing_key_file -%}
+{%- if key_file == "" -%}{%- set key_file = env.HOME ~ "/.ssh/git_signing_key.pub" -%}{%- endif -%}
+# Managed by mise [dotfiles] — edit home/dot_gitconfig.tera in kukv/dotfiles
+[user]
+    name = {{ vars.git_name }}
+    email = {{ vars.git_email }}
+    # git requires user.signingkey for SSH signing even when a signing program
+    # is configured, so pin the public-key file here (the signer resolves the
+    # matching private key). Override via mise var git_signing_key_file.
+    signingkey = {{ key_file }}
+[core]
+    quotepath = false
+{%- if wsl %}
+    # WSL: route git's ssh through the Windows host, where the SSH agent (1Password or Windows OpenSSH) holds the key.
+    sshCommand = ssh.exe
+{%- endif %}
+[ghq]
+    root = {{ env.HOME }}/dev/ghq
+[color]
+    ui = auto
+[gpg]
+    format = ssh
+[gpg "ssh"]
+{%- if op %}
+{%- if os() == "macos" %}
+    program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
+{%- elif wsl %}
+    # WSL: resolved via the Windows PATH (WSL interop), same mechanism as ssh.exe above
+    program = op-ssh-sign-wsl.exe
+{%- endif %}
+{%- else %}
+    # No 1Password: verify local-key signatures against this file (rendered from home/dot_ssh/allowed_signers.tera).
+    allowedSignersFile = {{ env.HOME }}/.ssh/allowed_signers
+{%- endif %}
+[commit]
+    gpgsign = true
+[tag]
+    gpgsign = true

@@ -24,6 +24,10 @@ echo "== work module flips use_1password"
 [ "$(mise -E wsl,work vars use_1password)" = "false" ]
 [ "$(mise vars use_1password)" = "true" ]
 
+echo "== wsl module sets is_wsl"
+[ "$(mise -E wsl vars is_wsl)" = "true" ]
+[ "$(mise vars is_wsl)" = "false" ]
+
 if [ "$(uname -s)" = Linux ]; then
   echo "== linux declarations are present"
   out="$(mise bootstrap plan 2>&1)"
