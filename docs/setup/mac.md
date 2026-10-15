@@ -98,7 +98,7 @@ zsh -ic 'alias gst; alias md'
 plutil -p ~/Library/LaunchAgents/dev.mise.mise-bootstrap.plist
 update_os
 tail -30 ~/.local/log/mise-bootstrap/$(ls -t ~/.local/log/mise-bootstrap | head -1)
-cd ~/.local/share/dotfiles && git log -1 --show-signature; cd ~
+cd ~/.local/share/dotfiles && git commit-tree -S HEAD^{tree} -m signing-test | xargs git cat-file -p | grep -c gpgsig; cd ~
 ```
 
 期待値:
@@ -108,4 +108,5 @@ cd ~/.local/share/dotfiles && git log -1 --show-signature; cd ~
 - `alias gst` / `alias md` が表示され、zsh の起動でエラーが出ない
 - `plutil -p` の `ProgramArguments` が `/Users/<user>/.local/share/dotfiles/bootstrap/scheduled-run.sh`、`StartCalendarInterval` が日曜 21:00(`Weekday => 0`, `Hour => 21`)
 - `update_os` のログ末尾にエラーが無い
-- `git log --show-signature` で署名が検証される(`Good "git" signature`)
+- 1Password の承認ダイアログが出て、承認すると `1` が出る(署名付きのコミットオブジェクトが作られる。ブランチは動かない)
+  - 1Password で署名する Mac には `allowed_signers` が無いため、`git log --show-signature` では検証できない
