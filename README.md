@@ -52,7 +52,7 @@ GitHub token は `~/.local/etc/bootstrap.env`(0600)に `MISE_GITHUB_TOKEN=…` /
 詳しい手順は `docs/setup/` を参照してください。
 - [WSL 新規](docs/setup/wsl-new.md)
 - [WSL 移行(os-setup から)](docs/setup/wsl-migration.md)
-- [Mac](docs/setup/mac.md)(未整備)
+- [Mac(新規 / os-setup からの移行)](docs/setup/mac.md)
 
 ### 構成
 - `mise.toml`(全マシン共通)/ `mise.linux.toml`・`mise.macos.toml`(OS 別、自動で読まれる)
