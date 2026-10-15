@@ -14,7 +14,7 @@ dotfiles/
 ├── mise.linux.toml           # Linux(自動で読まれる)
 ├── mise.macos.toml           # macOS(自動で読まれる)
 ├── mise.wsl.toml             # module: WSL(is_wsl、wsl.conf など)
-├── mise.work.toml            # module: 会社 PC(use_1password = false)
+├── mise.work.toml            # module: 作業用 PC(use_1password = false)
 ├── bootstrap/                # init.sh と hook / 定期実行用スクリプト
 ├── home/                     # ~ に配置するファイル(直下の dot_ は ~ の . に対応。*.tera はテンプレート)
 ├── tests/                    # bootstrap / dotfiles / zsh のテストと Docker 環境
@@ -31,7 +31,7 @@ dotfiles/
 curl -fsSL https://raw.githubusercontent.com/kukv/dotfiles/main/bootstrap/init.sh | sh
 # 個人 WSL
 curl -fsSL https://raw.githubusercontent.com/kukv/dotfiles/main/bootstrap/init.sh | sh -s -- --env wsl
-# 会社 WSL
+# 作業用 WSL
 curl -fsSL https://raw.githubusercontent.com/kukv/dotfiles/main/bootstrap/init.sh | sh -s -- --env wsl,work
 ```
 init.sh は次を行い、最後に `mise bootstrap --from kukv/dotfiles --prompt-vars` で OS 設定・パッケージ・dotfiles・ツールを適用します。
@@ -115,7 +115,7 @@ HOMEBREW_GITHUB_API_TOKEN=github_pat_xxxxxxxx
 開発用 clone(`ghq get kukv/dotfiles`)で `home/` と `mise.toml` を編集して push し、`update_os` で反映します。
 bootstrap 用チェックアウト(`~/.local/share/dotfiles`)は直接編集しません(未コミットの変更があると週次の更新が止まり得るため)。
 
-push 前に手元で試す場合は、開発用 clone で次を実行します(WSL は `-E wsl`、会社 PC は `-E wsl,work` を付ける):
+push 前に手元で試す場合は、開発用 clone で次を実行します(WSL は `-E wsl`、作業用 PC は `-E wsl,work` を付ける):
 
 ```bash
 mise trust .
