@@ -45,7 +45,7 @@ cd "$HOME"
 # renovate: datasource=github-releases depName=twpayne/chezmoi
 chezmoi_version="2.73.1"
 
-# The old Ansible role used 60s; mise's default 3s is too short without a token.
+# The old Ansible role used 60s; mise's default is too short without a token.
 export MISE_FETCH_REMOTE_VERSIONS_TIMEOUT=60
 
 # --force: overwrite files changed at runtime (e.g. ~/.claude/settings.json) without a TTY.

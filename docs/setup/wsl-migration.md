@@ -162,8 +162,22 @@ systemctl --user list-timers | grep mise-bootstrap
 ## 8. 後片付け
 
 ```bash
-rm -rf ~/.local/share/chezmoi
-sudo rm -rf /var/log/ansible /etc/ansible/extra_vars.yaml
+rm -rf ~/.local/share/chezmoi ~/.ansible
+sudo apt-get purge -y ansible ansible-core
+sudo add-apt-repository --remove -y ppa:ansible/ansible
+sudo apt-get update
+sudo apt-get autoremove -y
+sudo rm -rf /var/log/ansible /etc/ansible /etc/logrotate.d/ansible-pull
+```
+
+旧 init.sh が入れた ansible(PPA と apt パッケージ)、galaxy の collections / token、ログと logrotate 設定を消す。
+
+os-setup が入れていた herdr plugin のうち、今は管理していない 2 つを外す(入っていなければエラーになるだけ)。
+
+```bash
+herdr plugin uninstall kukv.github-dash
+herdr plugin uninstall official.browser
+herdr plugin list
 ```
 
 `/etc/systemd/resolved.conf` に Ansible の `# BEGIN DNS SETUP` ブロックが残るが、drop-in と同じ値なので無害。消す場合は手で削除する。
