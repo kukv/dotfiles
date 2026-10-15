@@ -13,6 +13,8 @@
 "brew:nmap" = "latest"
 "brew:gnupg" = "latest"
 "brew:mas" = "latest"
+# The prebuilt sheldon (mise tool) links /opt/homebrew/opt/openssl@3; Homebrew's default openssl is newer.
+"brew:openssl@3" = "latest"
 
 "brew-cask:font-hack-nerd-font" = "latest"
 "brew-cask:google-chrome" = "latest"
