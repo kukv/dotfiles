@@ -7,23 +7,25 @@
     {
       "customType": "regex",
       "managerFilePatterns": [
-        "/^home/\\.chezmoiexternal\\.toml$/"
+        "/^home/dot_config/sheldon/plugins\\.toml$/"
       ],
       "matchStrings": [
-        "https://github\\.com/(?<depName>[^/]+/[^/]+)/archive/refs/tags/(?<currentValue>[^.]+(?:\\.[^.]+)*)\\.tar\\.gz",
-        "# renovate: depName=(?<depName>\\S+)\\s+clone\\.args = \\[\"--branch\", \"(?<currentValue>[^\"]+)\""
+        "github = \"(?<depName>[^\"]+)\"\\s+tag = \"(?<currentValue>[^\"]+)\""
       ],
       "datasourceTemplate": "github-tags"
     },
     {
       "customType": "regex",
       "managerFilePatterns": [
-        "/^bootstrap/chezmoi-apply\\.sh$/"
+        "/^home/dot_config/sheldon/plugins\\.toml$/"
       ],
       "matchStrings": [
-        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+chezmoi_version=\"(?<currentValue>[^\"]+)\""
+        "github = \"ohmyzsh/ohmyzsh\"\\s+rev = \"(?<currentDigest>[0-9a-f]{40})\""
       ],
-      "extractVersionTemplate": "^v?(?<version>.*)$"
+      "depNameTemplate": "ohmyzsh/ohmyzsh",
+      "packageNameTemplate": "https://github.com/ohmyzsh/ohmyzsh",
+      "currentValueTemplate": "master",
+      "datasourceTemplate": "git-refs"
     }
   ]
 }
