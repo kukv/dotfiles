@@ -1,8 +1,8 @@
-# Mac 新規セットアップ手順
+# Mac セットアップ手順
 
 まっさらな Mac に、この dotfiles の mise bootstrap を適用する手順。
 
-- コマンドはそのまま貼れるように書いてある。シェル変数は使わない(シェルを開き直しても続きから実行できる)。
+- コマンドはそのまま貼れるように書いてある。シェル変数を使わないので、シェルを開き直しても途中の手順から続けられる。
 - 自分のユーザーで、デスクトップにログインした状態のターミナル(Terminal.app / iTerm2 など)で実行する。LaunchAgent は GUI ログインセッション(`gui/<uid>`)にしか登録できないため、SSH 経由では実行しない。
 
 ## 1. Xcode Command Line Tools を入れる
@@ -25,8 +25,10 @@ xcode-select -p
 
 ## 2. (任意)GitHub token を用意する
 
-`bootstrap.env` は週次実行(`update_os` を含む)でしか読まれず、初回実行には効かない。
-初回から token を使いたい場合(API の rate limit 対策)は、手順 3 を実行するシェルで先に export しておく。
+token が無いと、未認証の GitHub API の rate limit(60 回/時)に当たってツールのインストールや Homebrew の処理が失敗することがある。
+権限なしの token(fine-grained なら Public repositories の読み取りのみ、classic なら scope なし)で足りる。2 つの変数に同じ token を設定してよい。
+
+初回の init.sh は `bootstrap.env` を読まない。初回から token を使う場合は、手順 3 を実行するシェルで先に export しておく。
 
 ```bash
 export MISE_GITHUB_TOKEN=<token>
@@ -35,17 +37,20 @@ export HOMEBREW_GITHUB_API_TOKEN=<token>
 
 ## 3. init.sh を実行する
 
+macOS は module を使わないので `--env` は付けない。
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/kukv/dotfiles/main/bootstrap/init.sh | sh
 ```
 
 - Homebrew が無ければインストーラが起動し、sudo のパスワードと確認を聞かれる。
-- 途中で git の name / email を聞かれる(`~/.local/state/mise/vars.toml` に保存される)。
+- 途中で `Git user.name` / `Git user.email` を聞かれる。答えは `~/.local/state/mise/vars.toml` に保存され、次からは聞かれない。空のまま進めると、bootstrap は dotfiles を適用する前に止まる。
 - cask のインストールで sudo のパスワードを聞かれることがある。
 
 ## 4. GitHub token を保存する
 
-init.sh が空の `~/.local/etc/bootstrap.env`(0600)を作っている。週次実行で使う token を書く。
+init.sh が空の `~/.local/etc/bootstrap.env`(0600)を作ってある。このファイルは定期実行と `update_os` が読み込む。
+sh のスクリプトとして読み込まれるので、`KEY=value` の形で 1 行に 1 つずつ書く(`export` は不要)。
 
 ```bash
 vi ~/.local/etc/bootstrap.env
@@ -56,16 +61,25 @@ MISE_GITHUB_TOKEN=<token>
 HOMEBREW_GITHUB_API_TOKEN=<token>
 ```
 
+token を使わないなら空のままでよい。各変数の説明は README の「bootstrap.env」にある。
+
 ## 5. 1Password の SSH agent と署名鍵を用意する
 
-`~/.gitconfig` は 1Password の `op-ssh-sign` で署名し、`~/.ssh/config` は `~/.ssh/1Password/config` を読む。
+`~/.gitconfig` の設定で、git は 1Password の `op-ssh-sign` を使って署名する。`~/.ssh/config` は `~/.ssh/1Password/config` を読み込む。
 
 1. bootstrap で入った 1Password.app にサインインする。
 2. 設定 → 開発者 で「SSH エージェントを使用」と「Git コミットに署名」を有効にする。
-3. 署名に使う鍵の公開鍵を `~/.ssh/git_signing_key.pub` に保存する(`~/.gitconfig` の `user.signingkey` が指すファイル)。
+3. 署名に使う鍵の公開鍵を `~/.ssh/git_signing_key.pub` に書く。`~/.gitconfig` の `user.signingkey` は既定でこのファイルを指す。
 
 ```bash
 vi ~/.ssh/git_signing_key.pub
+```
+
+別の場所にある公開鍵を使う場合は、このファイルを作らずに、そのパスを mise の var `git_signing_key_file` に絶対パスで保存する。手順 7 の `update_os` で `~/.gitconfig` に反映される。
+`-C` でチェックアウトを指定しないと、`no var named ...` で失敗する。
+
+```bash
+/opt/homebrew/bin/mise -C ~/.local/share/dotfiles vars git_signing_key_file="$HOME/.ssh/id_ed25519.pub"
 ```
 
 ## 6. 管理外のアプリを手で入れる

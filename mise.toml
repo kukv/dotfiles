@@ -1,7 +1,7 @@
 # mise bootstrap project for kukv/dotfiles.
 # Base: settings every machine shares. OS differences live in mise.{linux,macos}.toml,
 # machine roles in modules (mise.wsl.toml, mise.work.toml) selected per machine in
-# ~/.config/mise/miserc.local.toml. See docs/superpowers/specs/2026-10-15-mise-bootstrap-migration-design.md
+# ~/.config/mise/miserc.local.toml.
 
 # ==========================================================================
 # vars (per-machine answers are saved by `mise bootstrap --prompt-vars`)
