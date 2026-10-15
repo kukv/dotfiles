@@ -1,4 +1,4 @@
-# WSL 新規セットアップ手順
+# WSL セットアップ手順
 
 まっさらな WSL ディストリビューションに、この dotfiles の mise bootstrap を適用する手順。
 
@@ -38,8 +38,10 @@ systemd=true
 
 ## 3. (任意)GitHub token を用意する
 
-`bootstrap.env` は週次実行(`update_os` を含む)でしか読まれず、初回実行には効かない。
-初回から token を使いたい場合は、手順 4 を実行するシェルで先に export しておく。
+token が無いと、未認証の GitHub API の rate limit(60 回/時)に当たってツールのインストールが失敗することがある。
+権限なしの token(fine-grained なら Public repositories の読み取りのみ、classic なら scope なし)で足りる。
+
+初回の init.sh は `bootstrap.env` を読まない。初回から token を使う場合は、手順 4 を実行するシェルで先に export しておく。
 
 ```bash
 export MISE_GITHUB_TOKEN=<token>
@@ -47,19 +49,37 @@ export MISE_GITHUB_TOKEN=<token>
 
 ## 4. init.sh を実行する
 
-work module を使うマシンは `--env wsl,work` にする。
+個人 WSL は `--env wsl`、会社 WSL は `--env wsl,work` にする(`~/.config/mise/miserc.local.toml` に `env = [...]` として書かれ、module が選ばれる)。
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/kukv/dotfiles/main/bootstrap/init.sh | sh -s -- --env wsl
 ```
 
 - 最初の sudo でパスワードを 1 回聞かれる。以降は init.sh が `/etc/sudoers.d/<ユーザー名>` に NOPASSWD を書く。
-- 途中で git の name / email を聞かれる(`~/.local/state/mise/vars.toml` に保存される)。
-- 署名鍵を既定(`~/.ssh/git_signing_key.pub`)以外に置く場合は、完了後に `~/.local/bin/mise vars git_signing_key_file=<パス>` を実行し、手順 7 の `update_os` で反映する。
+- 途中で `Git user.name` / `Git user.email` を聞かれる。答えは `~/.local/state/mise/vars.toml` に保存され、以後は聞かれない。空のままだと dotfiles の適用前に止まる。
 
-## 5. GitHub token を保存する
+## 5. 署名鍵を置く
 
-init.sh が空の `~/.local/etc/bootstrap.env`(0600)を作っている。週次実行で使う token を書く。
+`~/.gitconfig` の `user.signingkey` は既定で `~/.ssh/git_signing_key.pub` を指す。署名に使う鍵の公開鍵をここに置く。
+
+```bash
+vi ~/.ssh/git_signing_key.pub
+```
+
+別の場所の公開鍵を使う場合は、置く代わりに mise var `git_signing_key_file` に絶対パスで保存する(`-C` でチェックアウトを指定しないと `no var named ...` になる)。
+
+```bash
+~/.local/bin/mise -C ~/.local/share/dotfiles vars git_signing_key_file="$HOME/.ssh/id_ed25519.pub"
+```
+
+- 個人 WSL(1Password): 署名は Windows 側の `op-ssh-sign-wsl.exe` が行う。公開鍵は 1Password の「Git コミットに署名」で使う鍵のものにする。
+- 会社 WSL(work): ローカル鍵で署名し、`~/.ssh/allowed_signers` をこの公開鍵から作る。
+
+どちらも手順 8 の `update_os` で `~/.gitconfig` / `~/.ssh/allowed_signers` に反映される。
+
+## 6. GitHub token を保存する
+
+init.sh が空の `~/.local/etc/bootstrap.env`(0600)を作っている。定期実行と `update_os` はこのファイルを読む。sh で読み込むので `KEY=value` を 1 行ずつ書く(`export` は不要)。
 
 ```bash
 vi ~/.local/etc/bootstrap.env
@@ -69,7 +89,9 @@ vi ~/.local/etc/bootstrap.env
 MISE_GITHUB_TOKEN=<token>
 ```
 
-## 6. WSL を再起動する
+token を使わないなら空のままでよい。詳細は README の「bootstrap.env」を参照。
+
+## 7. WSL を再起動する
 
 `/etc/wsl.conf`(hostname / resolv.conf 生成の無効化)を反映するため、PowerShell で実行する。
 
@@ -77,7 +99,7 @@ MISE_GITHUB_TOKEN=<token>
 wsl --shutdown
 ```
 
-## 7. 成功条件を確認する
+## 8. 成功条件を確認する
 
 WSL を開き直して実行する。
 

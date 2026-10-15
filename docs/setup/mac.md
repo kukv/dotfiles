@@ -1,4 +1,4 @@
-# Mac 新規セットアップ手順
+# Mac セットアップ手順
 
 まっさらな Mac に、この dotfiles の mise bootstrap を適用する手順。
 
@@ -25,8 +25,10 @@ xcode-select -p
 
 ## 2. (任意)GitHub token を用意する
 
-`bootstrap.env` は週次実行(`update_os` を含む)でしか読まれず、初回実行には効かない。
-初回から token を使いたい場合(API の rate limit 対策)は、手順 3 を実行するシェルで先に export しておく。
+token が無いと、未認証の GitHub API の rate limit(60 回/時)に当たってツールのインストールや Homebrew の処理が失敗することがある。
+権限なしの token(fine-grained なら Public repositories の読み取りのみ、classic なら scope なし)で足り、同じ token を両方に使ってよい。
+
+初回の init.sh は `bootstrap.env` を読まない。初回から token を使う場合は、手順 3 を実行するシェルで先に export しておく。
 
 ```bash
 export MISE_GITHUB_TOKEN=<token>
@@ -35,17 +37,19 @@ export HOMEBREW_GITHUB_API_TOKEN=<token>
 
 ## 3. init.sh を実行する
 
+macOS は module を使わないので `--env` は付けない。
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/kukv/dotfiles/main/bootstrap/init.sh | sh
 ```
 
 - Homebrew が無ければインストーラが起動し、sudo のパスワードと確認を聞かれる。
-- 途中で git の name / email を聞かれる(`~/.local/state/mise/vars.toml` に保存される)。
+- 途中で `Git user.name` / `Git user.email` を聞かれる。答えは `~/.local/state/mise/vars.toml` に保存され、以後は聞かれない。空のままだと dotfiles の適用前に止まる。
 - cask のインストールで sudo のパスワードを聞かれることがある。
 
 ## 4. GitHub token を保存する
 
-init.sh が空の `~/.local/etc/bootstrap.env`(0600)を作っている。週次実行で使う token を書く。
+init.sh が空の `~/.local/etc/bootstrap.env`(0600)を作っている。定期実行と `update_os` はこのファイルを読む。sh で読み込むので `KEY=value` を 1 行ずつ書く(`export` は不要)。
 
 ```bash
 vi ~/.local/etc/bootstrap.env
@@ -55,6 +59,8 @@ vi ~/.local/etc/bootstrap.env
 MISE_GITHUB_TOKEN=<token>
 HOMEBREW_GITHUB_API_TOKEN=<token>
 ```
+
+token を使わないなら空のままでよい。詳細は README の「bootstrap.env」を参照。
 
 ## 5. 1Password の SSH agent と署名鍵を用意する
 
@@ -66,6 +72,12 @@ HOMEBREW_GITHUB_API_TOKEN=<token>
 
 ```bash
 vi ~/.ssh/git_signing_key.pub
+```
+
+別の場所の公開鍵を使う場合は、置く代わりに mise var `git_signing_key_file` に絶対パスで保存し、手順 7 の `update_os` で反映する(`-C` でチェックアウトを指定しないと `no var named ...` になる)。
+
+```bash
+/opt/homebrew/bin/mise -C ~/.local/share/dotfiles vars git_signing_key_file="$HOME/.ssh/id_ed25519.pub"
 ```
 
 ## 6. 管理外のアプリを手で入れる

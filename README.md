@@ -34,17 +34,79 @@ curl -fsSL https://raw.githubusercontent.com/kukv/dotfiles/main/bootstrap/init.s
 # 会社 WSL
 curl -fsSL https://raw.githubusercontent.com/kukv/dotfiles/main/bootstrap/init.sh | sh -s -- --env wsl,work
 ```
-mise を導入し、`mise bootstrap --from kukv/dotfiles` で OS 設定・パッケージ・dotfiles・ツールを適用します。
-初回に git の name / email を聞かれます(`~/.local/state/mise/vars.toml` に保存)。WSL は適用後に `wsl --shutdown` で再起動してください。
-GitHub token は `~/.local/etc/bootstrap.env`(0600)に `MISE_GITHUB_TOKEN=…` / `HOMEBREW_GITHUB_API_TOKEN=…` として置きます。
+init.sh は次を行い、最後に `mise bootstrap --from kukv/dotfiles --prompt-vars` で OS 設定・パッケージ・dotfiles・ツールを適用します。
 
-詳しい手順は `docs/setup/` を参照してください。
-- [WSL 新規](docs/setup/wsl-new.md)
-- [Mac 新規](docs/setup/mac-new.md)
+- mise を入れる(macOS: Homebrew、Linux: `~/.local/bin/mise`)
+- `--env` の値を `~/.config/mise/miserc.local.toml` に `env = ["wsl", "work"]` の形で書く(module の選択)
+- 空の `~/.local/etc/bootstrap.env`(0600)を作る
+- Linux のみ: `/etc/sudoers.d/<ユーザー名>` に NOPASSWD を書く(定期実行の sudo 用)
+
+途中で git の name / email を聞かれます(下の「mise vars」)。WSL は適用後に `wsl --shutdown` で再起動してください。
+
+手順の全体は `docs/setup/` を参照してください。
+- [WSL](docs/setup/wsl.md)
+- [Mac](docs/setup/mac.md)
 
 ### 再適用
 週次で自動実行されます(Linux: systemd user timer、macOS: LaunchAgent)。手動では `update_os`。
 チェックアウト外から `mise bootstrap --from ...` を手で実行する場合は `MISE_AUTO_ENV=true` が必要です(`.miserc.toml` の `auto_env` は cwd がチェックアウトのときだけ効くため。`update_os` なら不要)。
+
+---
+
+## マシンごとの設定
+
+### mise vars
+
+テンプレートが参照する値です。`mise.toml` の `[vars]` で宣言しています。
+
+| var | 設定のしかた | 用途 |
+|---|---|---|
+| `git_name` | 初回 bootstrap で聞かれる(必須) | `~/.gitconfig` の `user.name` |
+| `git_email` | 初回 bootstrap で聞かれる(必須) | `~/.gitconfig` の `user.email`、`~/.ssh/allowed_signers` |
+| `git_signing_key_file` | 任意。手で設定する | 署名用公開鍵のパス。空なら `~/.ssh/git_signing_key.pub` |
+| `use_1password` | module が決める(work で `false`) | `false` ならローカル鍵で署名し `~/.ssh/allowed_signers` を作る |
+| `is_wsl` | module が決める(wsl で `true`) | ssh / 署名を Windows 側(`ssh.exe` / `op-ssh-sign-wsl.exe`)に回す |
+
+`git_name` / `git_email` が空のままだと `pre-dotfiles` hook が止めます。
+答えや手で設定した値は `~/.local/state/mise/vars.toml` に保存されます。保存値は `default` より優先されますが、module(`mise.wsl.toml` / `mise.work.toml`)の `[vars]` が書いた値には負けます。`use_1password` / `is_wsl` は module の選択(`miserc.local.toml` の `env`)で決めるもので、`mise vars` では保存しません。
+
+`mise vars` は bootstrap 用チェックアウトの `[vars]` を読むので、`-C ~/.local/share/dotfiles` を付けて実行します(付けないと `no var named ...` になる)。
+
+```bash
+# 一覧(値と、どのファイルから来ているか)
+mise -C ~/.local/share/dotfiles vars
+
+# 値を直接保存する(パスは絶対パスで書く。~ はテンプレート側で展開されない)
+mise -C ~/.local/share/dotfiles vars git_signing_key_file="$HOME/.ssh/id_ed25519.pub"
+
+# name / email を聞き直す
+mise -C ~/.local/share/dotfiles vars unset git_name git_email
+mise -C ~/.local/share/dotfiles vars prompt
+```
+
+変更は次の適用で `~` に反映されます(すぐ反映するなら `update_os`)。
+
+### bootstrap.env
+
+`~/.local/etc/bootstrap.env`(0600、リポジトリ管理外)は、定期実行と `update_os` が使う `bootstrap/scheduled-run.sh` だけが読みます。
+`set -a` の下で sh の `.` で読み込むため、`KEY=value` を 1 行ずつ書きます(`export` は不要。空白や記号を含む値はクォートする)。
+
+```
+MISE_GITHUB_TOKEN=github_pat_xxxxxxxx
+# macOS のみ
+HOMEBREW_GITHUB_API_TOKEN=github_pat_xxxxxxxx
+```
+
+| 変数 | 対象 | 用途 |
+|---|---|---|
+| `MISE_GITHUB_TOKEN` | 全マシン | mise がツールの版解決・ダウンロードで叩く GitHub API の認証 |
+| `HOMEBREW_GITHUB_API_TOKEN` | macOS | Homebrew が叩く GitHub API の認証 |
+
+どちらも任意で、空ファイルのままでも動きます。無いと未認証の GitHub API の rate limit(60 回/時)に当たって失敗することがあります。
+管理しているツールはすべて公開リポジトリなので、token は権限なし(fine-grained なら Public repositories の読み取りのみ、classic なら scope なし)で足ります。同じ token を両方に使って構いません。
+
+初回の `init.sh` はこのファイルを読みません。初回から token を使う場合は、init.sh を実行するシェルで先に `export` しておきます。
+対話シェルで手動実行する mise は、`~/.config/mise/config.toml` の `credential_command = "gh auth token"` で gh の token を使います。
 
 ---
 
