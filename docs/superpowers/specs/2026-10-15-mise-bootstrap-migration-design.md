@@ -200,6 +200,9 @@ os-setup は README に移転先を書いてアーカイブする(アーカイ�
 
 ### oh-my-zsh
 
+> **2026-10-15 追記:** 本節の決定(案 A)は撤回した。chezmoi の撤去と oh-my-zsh → sheldon の移行は
+> [2026-10-15-chezmoi-removal-design.md](2026-10-15-chezmoi-removal-design.md) を参照。
+
 **決定: 案 A(oh-my-zsh を継続)。chezmoi 撤去と同時に、取得方法を `.chezmoiexternal` から `[bootstrap.repos]` へ切り替える。**
 本フェーズでは `.chezmoiexternal` のまま変更しない。
 

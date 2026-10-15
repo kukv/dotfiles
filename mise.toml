@@ -53,7 +53,7 @@ run = "'{{ config_root }}/bootstrap/local-files.sh'"
 "~/.config/git/ignore" = { source = "home/dot_config/git/ignore", mode = "copy" }
 "~/.config/herdr/config.toml" = { source = "home/dot_config/herdr/config.toml", mode = "copy" }
 "~/.config/mise/config.toml" = { source = "home/dot_config/mise/config.toml", mode = "copy" }
-# chezmoi never deployed these (it ignores dot-prefixed sources); keep it that way.
+# These were never deployed (dot-prefixed sources were ignored); keep it that way.
 "~/.config/nvim" = { source = "home/dot_config/nvim", mode = "copy", exclude = ["/.gitignore", "/.neoconf.json"] }
 "~/Library/Application Support/iTerm2/DynamicProfiles/default_profile.json" = { source = "home/Library/Application Support/iTerm2/DynamicProfiles/default_profile.json", mode = "copy", variants = [{ os = "macos" }] }
 
