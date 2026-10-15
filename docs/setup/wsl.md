@@ -49,7 +49,7 @@ export MISE_GITHUB_TOKEN=<token>
 
 ## 4. init.sh を実行する
 
-個人 WSL は `--env wsl`、会社 WSL は `--env wsl,work` を付ける。
+WSL は `--env wsl` を付ける。
 指定した値は `~/.config/mise/miserc.local.toml` に `env = [...]` として保存され、読み込む module がこれで決まる。
 
 ```bash
