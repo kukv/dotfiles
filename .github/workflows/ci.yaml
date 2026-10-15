@@ -23,18 +23,21 @@ jobs:
       contents: read
     env:
       MISE_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # renovate: datasource=github-releases depName=jdx/mise
-      MISE_VERSION: v2026.10.10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      # mise.run reads MISE_VERSION from the environment.
+      # Only the mise binary: the tests run mise themselves (install / env / cache off).
       - name: Install mise
-        run: |
-          curl -fsSL https://mise.run | sh
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+        uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
+        with:
+          # renovate: datasource=github-releases depName=jdx/mise extractVersion=^v(?<version>.*)$
+          version: 2026.10.10
+          install: false
+          cache: false
+          env: false
+          export_path: false
 
       - name: shellcheck bootstrap scripts
         if: runner.os == 'Linux'
