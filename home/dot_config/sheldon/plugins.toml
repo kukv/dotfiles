@@ -7,19 +7,9 @@ shell = "zsh"
 github = "zsh-users/zsh-completions"
 tag = "0.36.0"
 
-# What oh-my-zsh.sh did before loading lib/ (ZSH_CACHE_DIR is exported in ~/.zshrc).
-[plugins.omz-setup]
-inline = '''
-mkdir -p "$ZSH_CACHE_DIR/completions"
-(( ${fpath[(Ie)$ZSH_CACHE_DIR/completions]} )) || fpath=("$ZSH_CACHE_DIR/completions" $fpath)
-autoload -Uz compinit && compinit
-'''
-
-# oh-my-zsh: only lib/ (completion, key bindings, history, directories, ...) and the git plugin.
-[plugins.ohmyzsh]
-github = "ohmyzsh/ohmyzsh"
-rev = "964ddf789b022b6958b27d02d7fa54f552de21e9"
-use = ["lib/*.zsh", "plugins/git/git.plugin.zsh"]
+# After zsh-completions joins fpath. bashcompinit lets bash-only completion scripts work.
+[plugins.compinit]
+inline = 'autoload -Uz compinit && compinit && autoload -Uz bashcompinit && bashcompinit'
 
 # Theme. Its libs/ are git submodules, which sheldon clones recursively.
 [plugins.alien]
@@ -34,10 +24,6 @@ tag = "v0.7.1"
 [plugins.zsh-history-substring-search]
 github = "zsh-users/zsh-history-substring-search"
 tag = "v1.1.0"
-
-# oh-my-zsh.sh ran this after loading the theme.
-[plugins.omz-list-colors]
-inline = '[[ -z "$LS_COLORS" ]] || zstyle ":completion:*" list-colors "${(s.:.)LS_COLORS}"'
 
 # Must be loaded last.
 [plugins.zsh-syntax-highlighting]

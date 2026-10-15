@@ -13,19 +13,6 @@
         "github = \"(?<depName>[^\"]+)\"\\s+tag = \"(?<currentValue>[^\"]+)\""
       ],
       "datasourceTemplate": "github-tags"
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns": [
-        "/^home/dot_config/sheldon/plugins\\.toml$/"
-      ],
-      "matchStrings": [
-        "github = \"ohmyzsh/ohmyzsh\"\\s+rev = \"(?<currentDigest>[0-9a-f]{40})\""
-      ],
-      "depNameTemplate": "ohmyzsh/ohmyzsh",
-      "packageNameTemplate": "https://github.com/ohmyzsh/ohmyzsh",
-      "currentValueTemplate": "master",
-      "datasourceTemplate": "git-refs"
     }
   ]
 }

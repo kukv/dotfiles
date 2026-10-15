@@ -50,7 +50,7 @@ MISE_AUTO_ENV=true mise dot diff
 cd ~
 ```
 
-期待値: dotfiles の差分は、ヘッダコメントの書き換え、zshrc の sheldon 化、`~/.config/mise/config.toml` の chezmoi → sheldon だけ。
+期待値: dotfiles の差分は、ヘッダコメントの書き換え、zshrc の oh-my-zsh → sheldon + 自前の設定への置き換え、`~/.config/mise/config.toml` の chezmoi → sheldon だけ。
 git の name / email、署名の設定、ssh の設定が変わっていないこと。想定外の差分があれば止める。
 
 ## 4. 適用する
@@ -86,16 +86,18 @@ diff ~/chezmoi-removal-backup/.zshrc ~/.zshrc
 
 期待値: `dot-exit=0`。diff はヘッダなどのコメント行と、zshrc の oh-my-zsh → sheldon の部分だけ。
 
+oh-my-zsh の git エイリアスは `g` `gst` `ga` `gaa` `gc` `gd` `gds` `gb` `gco` `gsw` `gswc` `gf` `gl` `gp` `grb` `glog` `gsta` `gstp` の 18 個だけ残る。他を使っていた場合は `~/.zshrc.local` か `home/dot_zshrc.tera` に足す。
+
 新しいターミナルを開いて確認する:
 
 ```bash
 time zsh -ic exit
-zsh -ic 'alias gst; alias md; [[ -o autocd ]] && echo autocd-ok'
+zsh -ic 'alias gst; alias gl; alias gsw; alias md; [[ -o autocd ]] && echo autocd-ok'
 ```
 
 期待値: 起動時間が 1 と大きく変わらない。エラーが出ない。
 
-目で確認する: alien のプロンプト / Tab の補完メニュー / ↑ で入力中の文字列から始まる履歴を検索 / 構文ハイライト / 自動補完の候補 / `..` で移動 / git の操作(コミットに署名が付く: `git log --show-signature -1`)。
+目で確認する: alien のプロンプト / Tab の補完メニュー / ↑ で入力中の文字列から始まる履歴を検索 / 構文ハイライト / 自動補完の候補 / `..` で移動 / git の操作(コミットに署名が付く: `git log --show-signature -1`) / ターミナルのタイトルに今のディレクトリが出る / 貼り付けた URL が自動でクォートされる。
 
 ## 切り戻し(問題があったとき)
 

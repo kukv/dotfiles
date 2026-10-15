@@ -79,7 +79,7 @@ bootstrap が**初回に一度だけ生成**し(`bootstrap/local-files.sh`)、�
   - `vars.is_wsl`(wsl module): 例: WSL の `alias ssh='ssh.exe'`、`sshCommand = ssh.exe`
   - `vars.use_1password`(work module で `false`): ローカル鍵での署名と `~/.ssh/allowed_signers`
 - macOS だけのファイルは `[dotfiles]` の `variants = [{ os = "macos" }]`
-- zsh のプラグイン(oh-my-zsh の lib と git プラグイン、zsh-users の各プラグイン、alien テーマ)は sheldon(`home/dot_config/sheldon/plugins.toml`)で取得します。版は固定し、renovate が追従します
+- zsh のプラグイン(zsh-users の各プラグインと alien テーマ)は sheldon(`home/dot_config/sheldon/plugins.toml`)で取得します。版は固定し、renovate が追従します。oh-my-zsh は使わず、補完・キーバインド・履歴などの設定と git エイリアスは `home/dot_zshrc.tera` に直接書いています
 
 ---
 

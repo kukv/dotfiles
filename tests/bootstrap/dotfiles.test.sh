@@ -48,6 +48,8 @@ check_common() {
   grep -qx 'eval "$(sheldon source)"' "$h/.zshrc" || fail ".zshrc does not load sheldon"
   if grep -q 'oh-my-zsh.sh' "$h/.zshrc"; then fail "oh-my-zsh.sh still sourced"; fi
   if grep -q 'os-setup' "$h/.zshrc"; then fail "os-setup reference left in .zshrc"; fi
+  if grep -q ohmyzsh "$h/.config/sheldon/plugins.toml"; then fail "oh-my-zsh still in sheldon plugins"; fi
+  if grep -q 'ZSH_CACHE_DIR' "$h/.zshrc"; then fail "ZSH_CACHE_DIR left in .zshrc"; fi
   [ -f "$h/.config/sheldon/plugins.toml" ] || fail "sheldon plugins.toml missing"
 }
 

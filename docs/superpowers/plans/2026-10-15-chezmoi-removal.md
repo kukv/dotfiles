@@ -512,6 +512,8 @@ git commit -m "feat(dotfiles): gitconfig / zprofile / ssh を Tera テンプレ�
 
 ### Task 3: zsh(sheldon)
 
+> **2026-10-16 追記:** oh-my-zsh は完全に廃止した(ohmyzsh / omz-setup / omz-list-colors を plugins.toml から外し、必要な挙動と git エイリアス 18 個を zshrc に直接書いた)。renovate の git-refs エントリ(Task 5)も削除。詳細は spec §2 を参照。
+
 **Files:**
 - Create: `home/dot_config/sheldon/plugins.toml`、`tests/bootstrap/zsh.test.sh`
 - Modify: `home/dot_zshrc.tera`、`home/dot_config/mise/config.toml`、`mise.toml`、`bootstrap/post-tools.sh`

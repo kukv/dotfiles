@@ -8,6 +8,116 @@
 eval "$(mise activate zsh)"
 
 # ==========================================================================
+# = Shell options (oh-my-zsh is not used; these replace what its lib set)
+# ==========================================================================
+setopt auto_cd auto_pushd pushd_ignore_dups pushdminus
+setopt share_history hist_expire_dups_first hist_ignore_dups hist_ignore_space hist_verify
+setopt interactive_comments multios long_list_jobs
+setopt auto_menu complete_in_word always_to_end
+unsetopt menu_complete flowcontrol
+
+# ==========================================================================
+# = Colors
+# ==========================================================================
+if ls --color -d . >/dev/null 2>&1; then
+    (( $+commands[dircolors] )) && eval "$(dircolors -b)"
+    alias ls='ls --color=tty'
+else
+    export CLICOLOR=1
+    alias ls='ls -G'
+fi
+alias grep='grep --color=auto'
+
+# ==========================================================================
+# = Completion (compinit itself runs in sheldon, after zsh-completions)
+# ==========================================================================
+zstyle ':completion:*:*:*:*:*' menu select
+zstyle ':completion:*' matcher-list 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' 'r:|=*' 'l:|=* r:|=*'
+zstyle ':completion:*' special-dirs true
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+zstyle ':completion:*' use-cache yes
+zstyle ':completion:*' cache-path "${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
+
+# ==========================================================================
+# = Key bindings
+# ==========================================================================
+# Explicit: zsh picks vi mode when EDITOR/VISUAL contains "vi".
+bindkey -e
+autoload -Uz up-line-or-beginning-search down-line-or-beginning-search edit-command-line
+zle -N up-line-or-beginning-search
+zle -N down-line-or-beginning-search
+zle -N edit-command-line
+# Up/Down: search history for lines starting with what is typed (normal and application cursor modes).
+bindkey '^[[A' up-line-or-beginning-search
+bindkey '^[OA' up-line-or-beginning-search
+bindkey '^[[B' down-line-or-beginning-search
+bindkey '^[OB' down-line-or-beginning-search
+bindkey '^[[H' beginning-of-line
+bindkey '^[OH' beginning-of-line
+bindkey '^[[F' end-of-line
+bindkey '^[OF' end-of-line
+bindkey '^[[3~' delete-char
+bindkey '^[[1;5C' forward-word
+bindkey '^[[1;5D' backward-word
+bindkey '^[[Z' reverse-menu-complete
+bindkey '^X^E' edit-command-line
+# Quote URLs as they are typed or pasted.
+autoload -Uz bracketed-paste-magic url-quote-magic
+zle -N bracketed-paste bracketed-paste-magic
+zle -N self-insert url-quote-magic
+
+# ==========================================================================
+# = Terminal title: "user@host: dir" at the prompt, the command while it runs
+# ==========================================================================
+autoload -Uz add-zsh-hook
+_title_precmd() { [[ $TERM == dumb ]] || print -Pn '\e]0;%n@%m: %~\a' }
+_title_preexec() { [[ $TERM == dumb ]] || print -rn -- $'\e]0;'"$1"$'\a' }
+add-zsh-hook precmd _title_precmd
+add-zsh-hook preexec _title_preexec
+
+# ==========================================================================
+# = Directory aliases
+# ==========================================================================
+alias -g ...='../..'
+alias -g ....='../../..'
+alias -g .....='../../../..'
+alias -g ......='../../../../..'
+alias -- -='cd -'
+alias 1='cd -1'
+alias 2='cd -2'
+alias 3='cd -3'
+alias 4='cd -4'
+alias 5='cd -5'
+alias 6='cd -6'
+alias 7='cd -7'
+alias 8='cd -8'
+alias 9='cd -9'
+alias md='mkdir -p'
+alias rd=rmdir
+
+# ==========================================================================
+# = git aliases (same definitions as oh-my-zsh's git plugin; only these)
+# ==========================================================================
+alias g='git'
+alias gst='git status'
+alias ga='git add'
+alias gaa='git add --all'
+alias gc='git commit --verbose'
+alias gd='git diff'
+alias gds='git diff --staged'
+alias gb='git branch'
+alias gco='git checkout'
+alias gsw='git switch'
+alias gswc='git switch --create'
+alias gf='git fetch'
+alias gl='git pull'
+alias gp='git push'
+alias grb='git rebase'
+alias glog='git log --oneline --decorate --graph'
+alias gsta='git stash push'
+alias gstp='git stash pop'
+
+# ==========================================================================
 # = alien theme (read when sheldon loads it)
 # ==========================================================================
 export ALIEN_SECTIONS_LEFT=(
@@ -33,8 +143,6 @@ export ALIEN_USE_NERD_FONT=1
 # ==========================================================================
 # = zsh plugins (sheldon: ~/.config/sheldon/plugins.toml)
 # ==========================================================================
-# oh-my-zsh's lib/*.zsh keeps its caches here (oh-my-zsh's own loader used to set it).
-export ZSH_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
 eval "$(sheldon source)"
 {% if os() == "macos" %}
 {%- if vars.use_1password == "true" %}

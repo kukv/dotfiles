@@ -38,6 +38,13 @@ out="$(run "$h" zsh -ic '
   (( $+functions[_zsh_highlight] )) || print -u2 "zsh-syntax-highlighting not loaded"
   (( $+functions[history-substring-search-up] )) || print -u2 "zsh-history-substring-search not loaded"
   [[ -n $PROMPT ]] || print -u2 "empty PROMPT (alien)"
+  alias gl >/dev/null || print -u2 "no gl alias"
+  alias gsw >/dev/null || print -u2 "no gsw alias"
+  [[ -o sharehistory ]] || print -u2 "share_history off"
+  [[ -o interactivecomments ]] || print -u2 "interactive_comments off"
+  [[ $(bindkey -lL main) == *emacs* ]] || print -u2 "keymap is not emacs"
+  [[ $(bindkey "^[[A") == *up-line-or-beginning-search* ]] || print -u2 "up arrow is not prefix history search"
+  (( $+functions[_title_precmd] )) || print -u2 "no terminal title hook"
   print ok' 2>"$tmp/err")" || true
 if [ -s "$tmp/err" ]; then cat "$tmp/err" >&2; fail "zsh startup wrote to stderr"; fi
 [ "$out" = ok ] || fail "unexpected output: $out"
