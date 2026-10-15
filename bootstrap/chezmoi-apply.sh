@@ -41,6 +41,13 @@ chmod 600 "$conf_dir/chezmoi.toml"
 # Run from $HOME so mise does not load this repo's mise.toml (not needed by chezmoi).
 cd "$HOME"
 
+# Pinned (not "latest") so mise need not query the GitHub API to resolve the version.
+# renovate: datasource=github-releases depName=twpayne/chezmoi
+chezmoi_version="2.73.1"
+
+# The old Ansible role used 60s; mise's default 3s is too short without a token.
+export MISE_FETCH_REMOTE_VERSIONS_TIMEOUT=60
+
 # --force: overwrite files changed at runtime (e.g. ~/.claude/settings.json) without a TTY.
 # shellcheck disable=SC2086
-exec mise exec chezmoi@latest -- chezmoi apply --force ${CHEZMOI_APPLY_ARGS:-}
+exec mise exec "chezmoi@$chezmoi_version" -- chezmoi apply --force ${CHEZMOI_APPLY_ARGS:-}
