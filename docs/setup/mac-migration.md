@@ -2,12 +2,14 @@
 
 os-setup (Ansible) で構築済みの Mac を、この dotfiles の mise bootstrap に切り替える手順。
 まっさらな Mac は [mac-new.md](mac-new.md) を使う。
-WSL 版([wsl-migration.md](wsl-migration.md))と違い、Homebrew と brew の mise はそのまま使う。
 
 - コマンドはそのまま貼れるように書いてある。シェル変数は使わない(シェルを開き直しても続きから実行できる)。
-- **SSH ではなく、デスクトップにログインした状態のターミナル(iTerm2 など)で実行する。** LaunchAgent は GUI ログインセッション(`gui/<uid>`)にしか登録できない。
+- 自分のユーザーで、デスクトップにログインした状態のターミナル(Terminal.app / iTerm2 など)で実行する。LaunchAgent は GUI ログインセッション(`gui/<uid>`)にしか登録できないため、SSH 経由では実行しない。
+- WSL 版([wsl-migration.md](wsl-migration.md))と違い、Homebrew と brew の mise はそのまま使う。
 
 ## 1. 移行前の状態を保存する
+
+`~/.claude/settings.json` / `~/.claude/CLAUDE.md` は chezmoi が `--force` で上書きするため、Claude Code が実行中に書き足した設定(`autoMode` など)や手元だけの編集が消える。残したいものがあれば適用後にバックアップから戻す。
 
 ```bash
 mkdir -p ~/migration-backup
@@ -16,8 +18,6 @@ cp -p ~/.claude/CLAUDE.md ~/migration-backup/claude_CLAUDE.md
 cp -p ~/.ssh/config ~/migration-backup/ssh_config
 ls -la ~/migration-backup
 ```
-
-`~/.claude/settings.json` / `~/.claude/CLAUDE.md` は chezmoi が `--force` で上書きするため、Claude Code が実行中に書き足した設定(`autoMode` など)や手元だけの編集が消える。残したいものがあれば適用後にバックアップから戻す。
 
 ## 2. mise を最新にする
 
@@ -36,11 +36,13 @@ rm -f ~/.local/bin/os-setup-pull.sh ~/.local/bin/os-setup-log-rotation.sh
 launchctl list | grep os-setup
 ```
 
-最後の行で何も出なければよい。
+期待値:
+
+- 最後の `grep` で何も出ない
 
 ## 4. token を移す
 
-`os-setup.env` から必要な 2 行だけを `bootstrap.env` に写す(token は画面に出ない)。
+`os-setup.env` から必要な 2 行だけを `bootstrap.env` に写す。token は画面に出ない。
 
 ```bash
 (umask 077 && grep -E '^(MISE_GITHUB_TOKEN|HOMEBREW_GITHUB_API_TOKEN)=' ~/.local/etc/os-setup.env > ~/.local/etc/bootstrap.env)
@@ -48,12 +50,14 @@ chmod 600 ~/.local/etc/bootstrap.env
 sed -E 's/=.*/=<redacted>/' ~/.local/etc/bootstrap.env
 ```
 
-`MISE_GITHUB_TOKEN=<redacted>` と `HOMEBREW_GITHUB_API_TOKEN=<redacted>` の 2 行が出ればよい。
+期待値:
+
+- `MISE_GITHUB_TOKEN=<redacted>` と `HOMEBREW_GITHUB_API_TOKEN=<redacted>` の 2 行が出る
 
 ## 5. チェックアウトを用意し、git の値を移す
 
-`--from` の `--dry-run` はチェックアウトが無いと clone せずに止まるので、先に clone しておく
-(origin URL が `--from` の URL と一致すれば、mise はそのチェックアウトを使う)。
+`--from` の `--dry-run` はチェックアウトが無いと clone せずに止まるので、先に clone しておく。
+origin URL が `--from` の URL と一致すれば、mise はそのチェックアウトを使う。
 `mise vars prompt` はチェックアウトの `mise.toml` にある `[vars]` を読むので、チェックアウト内で実行する。
 
 ```bash
@@ -65,9 +69,8 @@ MISE_AUTO_ENV=true mise vars prompt
 MISE_AUTO_ENV=true mise vars
 ```
 
-`mise vars prompt` の質問に、extra_vars の `git.user.name` / `git.user.email` の値を入力する。
-Mac は 1Password で署名するので module(`miserc.local.toml`)と `git_signing_key_file` は設定しない
-(`use_1password = true` は既定値、署名鍵は既定の `~/.ssh/git_signing_key.pub`)。
+- `mise vars prompt` の質問に、extra_vars の `git.user.name` / `git.user.email` の値を入力する。
+- Mac は 1Password で署名するので、module(`miserc.local.toml`)と `git_signing_key_file` は設定しない(`use_1password = true` は既定値、署名鍵は既定の `~/.ssh/git_signing_key.pub`)。
 
 ## 6. 差分を確認してから適用する
 
@@ -79,7 +82,7 @@ MISE_AUTO_ENV=true mise bootstrap --dry-run
 mise exec chezmoi@latest -- chezmoi diff --source ~/.local/share/dotfiles --exclude=externals,scripts
 ```
 
-想定:
+期待値:
 
 - `plan` は brew / cask / mas のパッケージが全て `unchanged`(未宣言の formula / cask は消されない)
 - `status` で `launchd mise-bootstrap ... missing`(これから作られる)
@@ -94,7 +97,7 @@ cd ~
 
 ## 7. 成功条件を確認する
 
-新しいシェル(新しいタブ)を開いて実行する。
+新しいターミナルを開いて実行する。
 
 ```bash
 cd ~/.local/share/dotfiles && MISE_AUTO_ENV=true mise bootstrap status; cd ~
@@ -118,21 +121,23 @@ alias update_os
 - `plutil -p` の `ProgramArguments` が `/Users/<user>/.local/share/dotfiles/bootstrap/scheduled-run.sh`(`~` が展開済み)、`StartCalendarInterval` が日曜 21:00(`Weekday => 0`, `Hour => 21`)
 - `launchctl print` でエラーにならない(ロード済み)
 
-定期実行と同じ経路を手で一度通す(LaunchAgent が呼ぶスクリプトそのもの)。
+定期実行と同じ経路(LaunchAgent が呼ぶスクリプトそのもの)を手で一度通し、git の署名も確認する。
 
 ```bash
 update_os
 ls -t ~/.local/log/mise-bootstrap | head -1
 tail -30 ~/.local/log/mise-bootstrap/$(ls -t ~/.local/log/mise-bootstrap | head -1)
-```
-
-ログ末尾にエラーが無ければよい。git の署名も確認する。
-
-```bash
 cd ~/.local/share/dotfiles && git log -1 --show-signature; cd ~
 ```
 
-## 8. 後片付け
+期待値:
+
+- `update_os` のログ末尾にエラーが無い
+- `git log --show-signature` で署名が検証される(`Good "git" signature`)
+
+## 8. 旧環境を片付ける
+
+旧チェックアウト、galaxy の collections / token、ansible のログ、旧設定・秘密、旧 init.sh が入れた ansible と brew の chezmoi(mise の `[tools]` に移行済み)を消す。
 
 ```bash
 rm -rf ~/.local/share/chezmoi ~/.ansible ~/.local/log/ansible
@@ -150,9 +155,9 @@ update_os
 cd ~/.local/share/dotfiles && MISE_AUTO_ENV=true mise bootstrap status | grep -v -E 'installed|unchanged|set|loaded'; cd ~
 ```
 
-最後の行で何も出なければよい。
+期待値:
 
-旧チェックアウト、galaxy の collections / token、ansible のログ、旧設定・秘密、旧 init.sh が入れた ansible と brew の chezmoi(mise の `[tools]` に移行済み)を消す。
+- 最後の `grep` で何も出ない
 
 os-setup が入れていた herdr plugin のうち、今は管理していない 2 つを外す(入っていなければエラーになるだけ)。
 
@@ -162,4 +167,4 @@ herdr plugin uninstall official.browser
 herdr plugin list
 ```
 
-問題が無ければ `~/migration-backup` も削除してよい。
+- 問題が無ければ `~/migration-backup` も削除してよい。
