@@ -141,22 +141,24 @@ export ALIEN_THEME="blue"
 {%- if os() == "macos" %}
 export ALIEN_USE_NERD_FONT=1
 {%- endif %}
+{%- if os() == "macos" %}
+
+# ==========================================================================
+# = Docker completions (macOS; must join fpath before compinit in sheldon)
+# ==========================================================================
+fpath=(${HOME}/.docker/completions $fpath)
+{%- endif %}
 
 # ==========================================================================
 # = zsh plugins (sheldon: ~/.config/sheldon/plugins.toml)
 # ==========================================================================
 if (( $+commands[sheldon] )); then eval "$(sheldon source)"; else autoload -Uz compinit && compinit; fi
-{% if os() == "macos" %}
-{%- if vars.use_1password == "true" %}
+{%- if os() == "macos" and vars.use_1password == "true" %}
+
 # ==========================================================================
 # = 1Password SSH agent (macOS)
 # ==========================================================================
 export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
-{% endif %}
-# ==========================================================================
-# = Docker completions (macOS)
-# ==========================================================================
-fpath=(${HOME}/.docker/completions $fpath)
 {%- endif %}
 
 # ==========================================================================
@@ -221,7 +223,8 @@ alias scp='scp.exe'
 # ==========================================================================
 # = Zsh history
 # ==========================================================================
-HISTSIZE=1000
+# HISTSIZE must exceed SAVEHIST for hist_expire_dups_first to work.
+HISTSIZE=2500
 SAVEHIST=2000
 HISTFILE=$HOME/.zsh_history
 setopt extended_history
