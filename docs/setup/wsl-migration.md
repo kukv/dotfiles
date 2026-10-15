@@ -85,10 +85,10 @@ printf 'env = ["wsl"]\n' > ~/.config/mise/miserc.local.toml
 printf 'env = ["wsl", "work"]\n' > ~/.config/mise/miserc.local.toml
 ```
 
-`git.signing_key_file` が設定されている場合だけ、その値で次を実行する。
+`git.signing_key_file` が設定されている場合だけ、その値で次を実行する。`~` で書かれていたら `/home/<ユーザー名>/...` の絶対パスにする(allowed_signers の生成が `~` を展開しないため)。
 
 ```bash
-~/.local/bin/mise vars git_signing_key_file=<signing_key_file の値>
+~/.local/bin/mise vars git_signing_key_file=<signing_key_file の値を絶対パスにしたもの>
 ```
 
 ## 5. linuxbrew を外す
