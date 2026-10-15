@@ -56,6 +56,8 @@ bindkey '^[[H' beginning-of-line
 bindkey '^[OH' beginning-of-line
 bindkey '^[[F' end-of-line
 bindkey '^[OF' end-of-line
+bindkey '^[[1~' beginning-of-line
+bindkey '^[[4~' end-of-line
 bindkey '^[[3~' delete-char
 bindkey '^[[1;5C' forward-word
 bindkey '^[[1;5D' backward-word
@@ -143,7 +145,7 @@ export ALIEN_USE_NERD_FONT=1
 # ==========================================================================
 # = zsh plugins (sheldon: ~/.config/sheldon/plugins.toml)
 # ==========================================================================
-eval "$(sheldon source)"
+if (( $+commands[sheldon] )); then eval "$(sheldon source)"; else autoload -Uz compinit && compinit; fi
 {% if os() == "macos" %}
 {%- if vars.use_1password == "true" %}
 # ==========================================================================

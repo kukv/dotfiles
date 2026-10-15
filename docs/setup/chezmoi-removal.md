@@ -5,6 +5,7 @@ mise bootstrap で動いているマシンを、chezmoi を使わない構成(�
 
 - 前提: そのマシンが os-setup から mise bootstrap に移行済みであること(`~/.local/share/dotfiles` がある)。
 - コマンドはそのまま貼れるように書いてある。シェル変数は使わない。
+- 移行が終わるまで `chezmoi-removal` を force-push / 書き換えしない(各マシンがこのブランチを追従する)。
 - `~/.oh-my-zsh` は消さない(切り戻しで使う)。消すのは 6 の後片付けで。
 
 ## 1. 移行前の状態を保存する
@@ -97,6 +98,14 @@ zsh -ic 'alias gst; alias gl; alias gsw; alias md; [[ -o autocd ]] && echo autoc
 
 期待値: 起動時間が 1 と大きく変わらない。エラーが出ない。
 
+```bash
+zsh -ic 'autoload -Uz compaudit; compaudit'
+```
+
+期待値: 何も出ない。
+
+`dot status --missing` が `~/.claude/settings.json` の差異を報告したら、その間に Claude Code が書き換えたもの。`update_os` をもう一度実行する(その 1 件だけなら無視してよい)。
+
 目で確認する: alien のプロンプト / Tab の補完メニュー / ↑ で入力中の文字列から始まる履歴を検索 / 構文ハイライト / 自動補完の候補 / `..` で移動 / git の操作(コミットに署名が付く: `git log --show-signature -1`) / ターミナルのタイトルに今のディレクトリが出る / 貼り付けた URL が自動でクォートされる。
 
 ## 切り戻し(問題があったとき)
@@ -113,6 +122,8 @@ main の chezmoi hook が元の dotfiles を書き戻す。`~/.oh-my-zsh` は残
 
 ## 6. 後片付け(3 台とも完了し、main にマージした後)
 
+このリポジトリはマージ済みブランチを自動削除する(delete_branch_on_merge)。PR #75 のマージ後は `origin/chezmoi-removal` が消え、まだこのブランチにいるマシンは週次の `--update` が失敗する。マージ直後、次の日曜 21:00 の実行より前に、3 台とも下の手順を行う。
+
 ```bash
 cd ~/.local/share/dotfiles
 git checkout main
@@ -121,7 +132,13 @@ cd ~
 update_os
 ```
 
-`mise dot status --missing` が 0 で終わることを確認してから消す:
+先に `mise dot status --missing` が 0 で終わることを確認する:
+
+```bash
+cd ~/.local/share/dotfiles && MISE_AUTO_ENV=true mise dot status --missing; echo "dot-exit=$?"; cd ~
+```
+
+`dot-exit=0` なら次へ進み、消す:
 
 ```bash
 rm -rf ~/.oh-my-zsh ~/.config/chezmoi ~/.cache/chezmoi

@@ -45,7 +45,7 @@ check_common() {
   grep -qx '    email = ci@example.com' "$h/.gitconfig" || fail ".gitconfig email"
   if grep -q linuxbrew "$h/.zprofile"; then fail "linuxbrew left in .zprofile"; fi
   if grep -q chezmoi "$h/.gitconfig" "$h/.zprofile"; then fail "chezmoi reference left"; fi
-  grep -qx 'eval "$(sheldon source)"' "$h/.zshrc" || fail ".zshrc does not load sheldon"
+  grep -qxF 'if (( $+commands[sheldon] )); then eval "$(sheldon source)"; else autoload -Uz compinit && compinit; fi' "$h/.zshrc" || fail ".zshrc does not load sheldon"
   if grep -q 'oh-my-zsh.sh' "$h/.zshrc"; then fail "oh-my-zsh.sh still sourced"; fi
   if grep -q 'os-setup' "$h/.zshrc"; then fail "os-setup reference left in .zshrc"; fi
   if grep -q ohmyzsh "$h/.config/sheldon/plugins.toml"; then fail "oh-my-zsh still in sheldon plugins"; fi
@@ -75,6 +75,7 @@ check_wsl() {
   grep -qx '    program = op-ssh-sign-wsl.exe' "$h/.gitconfig" || fail "WSL signer"
   if grep -q 'MacOS/op-ssh-sign' "$h/.gitconfig"; then fail "macOS signer leaked into WSL"; fi
   [ ! -e "$h/.ssh/config" ] || fail ".ssh/config deployed on WSL"
+  [ ! -e "$h/.ssh/allowed_signers" ] || fail "allowed_signers on a 1Password WSL machine"
   grep -qx "alias ssh='ssh.exe'" "$h/.zshrc" || fail "WSL ssh alias"
 }
 

@@ -27,7 +27,16 @@ run() {
 
 run "$repo" mise trust . >/dev/null 2>&1
 run "$repo" mise dot apply >/dev/null
-run "$h" sheldon lock
+# Clones must not be group/other-writable whatever the umask (compaudit); retry on network flakes.
+(
+  umask 022
+  for i in 1 2 3; do
+    run "$h" sheldon lock && break
+    [ "$i" = 3 ] && exit 1
+    sleep 10
+  done
+) || fail "sheldon lock failed after 3 attempts"
+chmod -R go-w "$h/.local/share/sheldon"
 
 out="$(run "$h" zsh -ic '
   alias gst >/dev/null || print -u2 "no gst alias (oh-my-zsh git plugin)"
@@ -46,6 +55,10 @@ out="$(run "$h" zsh -ic '
   [[ $(bindkey "^[[A") == *up-line-or-beginning-search* ]] || print -u2 "up arrow is not prefix history search"
   (( $+functions[_title_precmd] )) || print -u2 "no terminal title hook"
   print ok' 2>"$tmp/err")" || true
-if [ -s "$tmp/err" ]; then cat "$tmp/err" >&2; fail "zsh startup wrote to stderr"; fi
+if [ -s "$tmp/err" ]; then
+  cat "$tmp/err" >&2
+  echo "== compaudit" >&2
+  run "$h" zsh -c 'autoload -Uz compaudit; compaudit' >&2 || true
+  fail "zsh startup wrote to stderr"; fi
 [ "$out" = ok ] || fail "unexpected output: $out"
 echo PASS
