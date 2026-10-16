@@ -38,22 +38,6 @@ herdr-file-viewer smarzban/herdr-file-viewer
 hunk.diff edmundmiller/herdr-plugin-hunk
 EOT
 
-# Claude Code skills: "<skill> <repo>". hunk-review is intentionally absent:
-# the self-made loader in ~/.claude/skills/hunk-review (mise [dotfiles]) matches the
-# mise-managed npm:hunkdiff version.
-while read -r name repo; do
-  [ -e "$HOME/.claude/skills/$name" ] ||
-    skills add "$repo" --skill "$name" --agent claude-code --global --yes </dev/null
-done <<'EOT'
-herdr herdrdev/herdr
-find-skills vercel-labs/skills
-ax yusukebe/ax
-ast-grep ast-grep/agent-skill
-ast-grep-outline ast-grep/agent-skill
-natural-japanese coji/natural-japanese
-yomiyasu nanaism/yomiyasu
-EOT
-
 # Claude Code CLI (self-updating; install once).
 if ! command -v claude >/dev/null 2>&1 && [ ! -x "$HOME/.local/bin/claude" ]; then
   curl -fsSL https://claude.ai/install.sh | bash

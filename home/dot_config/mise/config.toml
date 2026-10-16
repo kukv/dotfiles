@@ -25,6 +25,13 @@ package_manager = "pnpm"
 uvx = true
 
 # ==========================================================================
+# plugins
+# ==========================================================================
+[plugins]
+# skill:<owner>/<repo> の backend。Claude Code のスキルを取得して ~/.claude/skills にリンクする
+skill = "https://github.com/kukv/mise-skill#v0.1.1"
+
+# ==========================================================================
 # env
 # ==========================================================================
 [env]
@@ -119,9 +126,18 @@ rust = "latest"
 # [tools.ai]
 herdr = "latest"
 "github:yusukebe/ax" = "latest"
-"npm:skills" = "latest"
 "npm:@openai/codex" = "latest"
 "npm:@drawio/mcp" = "latest"
+
+# [tools.ai.skills]
+# hunk-review は入れない: ~/.claude/skills/hunk-review は自作ローダー(mise [dotfiles])で、
+# npm:hunkdiff の版に合わせてある。
+"skill:herdrdev/herdr" = { version = "latest", skills = ["herdr"] }
+"skill:vercel-labs/skills" = { version = "latest", skills = ["find-skills"] }
+"skill:yusukebe/ax" = { version = "latest", skills = ["ax"] }
+"skill:ast-grep/agent-skill" = { version = "ref:main", skills = ["ast-grep", "ast-grep-outline"] }
+"skill:coji/natural-japanese" = "latest"
+"skill:nanaism/yomiyasu" = "latest"
 
 # [tools.testing]
 "npm:playwright" = "latest"

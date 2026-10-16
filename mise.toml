@@ -61,5 +61,5 @@ run = "'{{ config_root }}/bootstrap/local-files.sh'"
 # bootstrap task (runs last in `mise bootstrap`, with [tools] on PATH)
 # ==========================================================================
 [tasks.bootstrap]
-description = "Post-tools setup: corepack, herdr plugins, Claude skills, Claude Code"
+description = "Post-tools setup: corepack, herdr plugins, Claude Code"
 run = ["'{{ config_root }}/bootstrap/post-tools.sh'"]
