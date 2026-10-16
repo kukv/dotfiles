@@ -29,7 +29,7 @@ uvx = true
 # ==========================================================================
 [plugins]
 # skill:<owner>/<repo> の backend。Claude Code のスキルを取得して ~/.claude/skills にリンクする
-skill = "https://github.com/kukv/mise-skill#v0.1.0"
+skill = "https://github.com/kukv/mise-skill#v0.1.1"
 
 # ==========================================================================
 # env
