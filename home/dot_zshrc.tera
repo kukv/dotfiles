@@ -4,6 +4,11 @@
 # ==========================================================================
 # = mise
 # ==========================================================================
+{%- if vars.is_wsl == "true" %}
+# WSL only: WSL appends the whole Windows PATH, and mise's prompt hook scanning
+# those /mnt/c dirs adds ~1-2s per cd. Keep only the Windows dirs used here.
+path=(${path:#/mnt/*} ${(M)path:#/mnt/c/([Ww][Ii][Nn][Dd][Oo][Ww][Ss](|/[Ss]ystem32|/[Ss]ystem32/WindowsPowerShell/v1.0/|/[Ss]ystem32/OpenSSH/)|*/vscode/current/bin|*/Microsoft VS Code/bin)})
+{%- endif %}
 # Before sheldon below: sheldon is installed as a mise tool.
 eval "$(mise activate zsh)"
 
@@ -228,6 +233,9 @@ HISTSIZE=2500
 SAVEHIST=2000
 HISTFILE=$HOME/.zsh_history
 setopt extended_history
+# Lock with fcntl, not a .zsh_history.LOCK file: creating that file bumps ~'s mtime
+# on every command, which makes mise's prompt hook redo its full run each time.
+setopt hist_fcntl_lock
 
 # ==========================================================================
 # = Machine-local overrides (untracked)
