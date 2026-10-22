@@ -43,6 +43,8 @@ fi
 if [ "$(uname -s)" = Linux ]; then
   echo "== wsl module declarations are present only with -E wsl"
   mise -E wsl bootstrap plan 2>&1 | grep -q /etc/wsl.conf || { echo "FAIL: wsl.conf missing" >&2; exit 1; }
+  mise -E wsl bootstrap plan 2>&1 | grep -q /etc/systemd/resolved.conf.d/wsl.conf || { echo "FAIL: resolved wsl.conf missing" >&2; exit 1; }
+  ! mise bootstrap plan 2>&1 | grep -q /etc/systemd/resolved.conf.d/wsl.conf || { echo "FAIL: resolved wsl.conf leaked into base" >&2; exit 1; }
   ! mise bootstrap plan 2>&1 | grep -q /etc/wsl.conf || { echo "FAIL: wsl.conf leaked into base" >&2; exit 1; }
 fi
 
