@@ -21,6 +21,24 @@ owner = "root"
 group = "root"
 mode = "0644"
 
+# WSL2 drops direct UDP/53 to outside servers (8.8.8.8 / 1.1.1.1 / the LAN router
+# all time out), so dns.conf's upstreams never answer. Send systemd-resolved to the
+# WSL DNS tunnel instead (needs dnsTunneling=true in %UserProfile%\.wslconfig).
+# Read after dns.conf; the empty DNS= / FallbackDNS= drop the lists set there.
+[bootstrap.files."/etc/systemd/resolved.conf.d/wsl.conf"]
+os = "linux"
+content = """
+# Managed by mise bootstrap (kukv/dotfiles)
+[Resolve]
+DNS=
+DNS=10.255.255.254
+FallbackDNS=
+"""
+owner = "root"
+group = "root"
+mode = "0644"
+notify = ["systemd-resolved"]
+
 # After files + services: dns.conf is written and systemd-resolved restarted by then.
 [bootstrap.hooks.pre-repos]
 run = "'{{ config_root }}/bootstrap/wsl-resolv.sh'"

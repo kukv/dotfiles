@@ -15,6 +15,13 @@ wsl --install -d Ubuntu
 
 初回起動時に聞かれる UNIX ユーザー名とパスワードを設定する。
 
+WSL からは外部の DNS サーバーに直接問い合わせられないので、Windows 経由で名前解決する DNS トンネルを有効にする。`%UserProfile%\.wslconfig` に次を書く(bootstrap は systemd-resolved の上流をこのトンネルの `10.255.255.254` に向ける)。
+
+```
+[wsl2]
+dnsTunneling=true
+```
+
 ## 2. systemd が動いていることを確認する
 
 ```bash
@@ -110,6 +117,7 @@ WSL を開き直して実行する。
 cd ~/.local/share/dotfiles && MISE_AUTO_ENV=true mise trust . && MISE_AUTO_ENV=true mise bootstrap status && MISE_AUTO_ENV=true mise dot status --missing; echo "dot-exit=$?"; cd ~
 zsh -ic 'alias gst; alias md'
 readlink /etc/resolv.conf
+resolvectl status | grep 'DNS Servers'
 getent hosts github.com
 zsh -ic 'alias ssh'
 systemctl --user list-timers | grep mise-bootstrap
@@ -123,6 +131,7 @@ journalctl --user -u dev.mise.mise-bootstrap -n 30 --no-pager
 - `dot-exit=0`
 - `alias gst` / `alias md` が表示され、zsh の起動でエラーが出ない
 - `readlink` が `../run/systemd/resolve/stub-resolv.conf`
+- `DNS Servers` が `10.255.255.254` だけ
 - `getent hosts github.com` が即座に返る(5 秒待たされない)
 - `alias ssh` が `ssh=ssh.exe`
 - `list-timers` に mise-bootstrap の timer が出る
