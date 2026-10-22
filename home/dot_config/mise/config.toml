@@ -135,10 +135,11 @@ herdr = "latest"
 "skill:herdrdev/herdr" = { version = "latest", skills = ["herdr"] }
 "skill:vercel-labs/skills" = { version = "latest", skills = ["find-skills"] }
 "skill:yusukebe/ax" = { version = "latest", skills = ["ax"] }
-"skill:ast-grep/agent-skill" = { version = "ref:main", skills = ["ast-grep", "ast-grep-outline"] }
+# タグの無いリポジトリは main のコミットに固定する。renovate が main の最新コミットへ追従させる (renovate.json)
+"skill:ast-grep/agent-skill" = { version = "ref:f2175aff21f20cfb8e2db30c28febeb3a2d42b61", skills = ["ast-grep", "ast-grep-outline"] }
 "skill:coji/natural-japanese" = "latest"
 "skill:nanaism/yomiyasu" = "latest"
-"skill:cloudflare/security-audit-skill" = "ref:main"
+"skill:cloudflare/security-audit-skill" = "ref:c1c8a8c1471069fb0e188eeaff69b8e8db6564a8"
 
 # [tools.testing]
 "npm:playwright" = "latest"

@@ -13,6 +13,18 @@
         "github = \"(?<depName>[^\"]+)\"\\s+tag = \"(?<currentValue>[^\"]+)\""
       ],
       "datasourceTemplate": "github-tags"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^home/dot_config/mise/config\\.toml$/"
+      ],
+      "matchStrings": [
+        "\"skill:(?<depName>[^\"]+)\" = (?:\\{ version = )?\"ref:(?<currentDigest>[0-9a-f]{40})\""
+      ],
+      "currentValueTemplate": "main",
+      "packageNameTemplate": "https://github.com/{{{depName}}}",
+      "datasourceTemplate": "git-refs"
     }
   ]
 }
