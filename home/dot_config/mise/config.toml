@@ -138,6 +138,7 @@ herdr = "latest"
 "skill:ast-grep/agent-skill" = { version = "ref:main", skills = ["ast-grep", "ast-grep-outline"] }
 "skill:coji/natural-japanese" = "latest"
 "skill:nanaism/yomiyasu" = "latest"
+"skill:cloudflare/security-audit-skill" = "ref:main"
 
 # [tools.testing]
 "npm:playwright" = "latest"
