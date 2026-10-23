@@ -108,5 +108,6 @@
   "skipWorkflowUsageWarning": true,
   "theme": "dark",
   "editorMode": "normal",
-  "agentPushNotifEnabled": true
+  "agentPushNotifEnabled": true,
+  "idleCompaction": false
 }
