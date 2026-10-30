@@ -62,7 +62,7 @@ bun = "latest"
 "npm:yarn" = "latest"
 
 # [tools.python]
-python = "3.15.0"
+python = "3.15.1"
 uv = "latest"
 
 # [tools.ruby]
