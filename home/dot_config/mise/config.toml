@@ -54,7 +54,7 @@ kotlin = "latest"
 
 # [tools.node]
 node = [
-    "24",
+    "26",
     "22",
 ]
 pnpm = "latest"
