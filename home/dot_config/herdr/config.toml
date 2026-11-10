@@ -5,14 +5,16 @@ name = "rose-pine"
 auto_switch = false
 
 [ui]
-agent_panel_sort = "spaces"
+agent_panel_sort = "priority"
 status_indicators = "dots"
 show_agent_labels_on_pane_borders = true
 
 # エージェント行に状態テキスト（idle / done など）を表示する。
 # デフォルトの rows は state_icon（色付きドット）のみで state_text を含まない。
+# $task は Claude Code の UserPromptSubmit hook（~/.claude/scripts/herdr-task-metadata.sh）が
+# report-metadata で送るプロンプト先頭部分。
 [ui.sidebar.agents]
-rows = [["state_icon", "state_text"], ["workspace", "tab"], ["terminal_title_stripped"], ["agent"]]
+rows = [["state_icon", "state_text"], ["workspace", "tab"], ["terminal_title_stripped"], ["$task"], ["agent"]]
 
 # アプリ内トーストではなく OS の通知センターに出す（別ウィンドウにいても気づける）
 [ui.toast]
@@ -21,10 +23,14 @@ delivery = "system"
 [ui.sound]
 enabled = true
 
-[experimental]
-# experimental graphics を有効化
+[terminal]
+# Kitty graphics 互換の外側ターミナルでペイン内の画像を描画する
 # herdr browserで利用
 kitty_graphics = true
+
+[experimental]
+# サーバーを完全に再起動してもペインの画面履歴を保持する
+pane_history = true
 
 # TUI がカーソルを隠していても、IME が候補ウィンドウの位置を追えるように外側のターミナルへカーソル位置を公開する
 reveal_hidden_cursor_for_cjk_ime = true
@@ -36,6 +42,7 @@ cjk_ime_agents = ["claude", "codex"]
 cjk_ime_cursor_shape = "steady_block"
 
 # prefix モードの間だけ macOS の入力ソースを ASCII 系に切り替え、抜けたら元の入力ソースに戻す
+# macOS/Windows 専用（Linux/WSL では無効）。macOS と共有の dotfiles なので残している。
 switch_ascii_input_source_in_prefix = true
 
 [keys]
@@ -48,6 +55,12 @@ new_tab = ""
 # ペイン間移動は prefix+h/j/k/l があるので実用上の損失はない。
 last_pane = "prefix+tab"
 cycle_pane_next = ""
+
+# エージェント間の移動（デフォルトは未割り当て）。prefix+[ / prefix+] と prefix+alt+1..9 は
+# デフォルト・下のカスタムコマンドのどちらとも衝突しない。
+next_agent = "prefix+]"
+previous_agent = "prefix+["
+focus_agent = "prefix+alt+1..9"
 
 # 新しいタブ: prefix+c で「worktree 元（メインのワークツリー）」を cwd にして開く。
 # git worktree list の先頭は必ずメインのワークツリーなので、起点が worktree 側でも
