@@ -41,6 +41,9 @@
     ],
     "defaultMode": "auto"
   },
+  "sandbox": {
+    "excludedCommands": ["herdr", "docker", "gh"]
+  },
   "model": "opus[1m]",
   "hooks": {
     "SessionStart": [
