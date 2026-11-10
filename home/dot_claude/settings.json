@@ -41,6 +41,9 @@
     ],
     "defaultMode": "auto"
   },
+  "sandbox": {
+    "excludedCommands": ["herdr"]
+  },
   "model": "opus[1m]",
   "hooks": {
     "SessionStart": [
