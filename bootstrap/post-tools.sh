@@ -5,10 +5,12 @@ set -eu
 
 # corepack shims in node's bin shadow the pnpm / yarn that mise manages, and
 # mise's npm backend then picks the wrong pnpm (ERR_PNPM_NO_GLOBAL_BIN_DIR).
+# Use each install's own corepack: node >= 25 no longer bundles corepack, so
+# `mise exec node -- corepack` fails when the default node is newer.
 for shim in "$HOME"/.local/share/mise/installs/node/*/bin/pnpm; do
-  if [ -e "$shim" ]; then
-    mise exec node -- corepack disable
-    break
+  bin=${shim%/pnpm}
+  if [ -e "$shim" ] && [ -e "$bin/corepack" ]; then
+    "$bin/node" "$bin/corepack" disable --install-directory "$bin"
   fi
 done
 
