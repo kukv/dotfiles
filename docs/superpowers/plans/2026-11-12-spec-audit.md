@@ -1,5 +1,7 @@
 # spec-audit スキル Implementation Plan
 
+> **注:** 本計画に埋め込んだスキル本文は初版。最終版は home/dot_claude/skills/spec-audit/ を参照（修正: ed64904, bf4d6bb, および最終レビュー対応）。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 仕様・設計資料の網羅性と整合性を点検して報告ファイルを書き出す `/spec-audit` スキルを `home/dot_claude/skills/spec-audit/` に作る。
