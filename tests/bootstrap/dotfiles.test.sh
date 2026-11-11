@@ -38,6 +38,7 @@ check_common() {
   h="$1"
   [ -x "$h/.claude/scripts/statusline.py" ] || fail "statusline.py not executable"
   [ -x "$h/.claude/skills/hunk-review/ensure-hunk-pane.sh" ] || fail "ensure-hunk-pane.sh not executable"
+  [ -f "$h/.claude/skills/spec-audit/SKILL.md" ] || fail "spec-audit skill not deployed"
   [ -f "$h/.config/nvim/init.lua" ] || fail "nvim not deployed"
   [ ! -e "$h/.config/nvim/.gitignore" ] || fail "nvim/.gitignore must not be deployed"
   [ ! -e "$h/.config/nvim/.neoconf.json" ] || fail "nvim/.neoconf.json must not be deployed"
