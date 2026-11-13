@@ -140,6 +140,7 @@ herdr = "latest"
 "skill:coji/natural-japanese" = "latest"
 "skill:nanaism/yomiyasu" = "latest"
 "skill:cloudflare/security-audit-skill" = "ref:c1c8a8c1471069fb0e188eeaff69b8e8db6564a8"
+"skill:cloudflare/skills" = { version = "ref:cbf893b954222276bf1af57e5f23379231e0efb9", skills = ["agents-sdk", "cloudflare", "cloudflare-email-service", "cloudflare-one", "cloudflare-one-migrations", "durable-objects", "sandbox-stable", "turnstile-spin", "web-perf", "workers-best-practices", "wrangler"] }
 
 # [tools.testing]
 "npm:playwright" = "latest"

@@ -12,6 +12,8 @@
 "brew:plantuml" = "latest"
 "brew:nmap" = "latest"
 "brew:gnupg" = "latest"
+"brew:mas" = "latest"
+"brew:sshpass" = "latest"
 # The prebuilt sheldon (mise tool) links /opt/homebrew/opt/openssl@3; Homebrew's default openssl is newer.
 "brew:openssl@3" = "latest"
 
@@ -32,7 +34,7 @@
 "brew-cask:thebrowsercompany-dia" = "latest"
 "brew-cask:onyx" = "latest"
 "brew-cask:raspberry-pi-imager" = "latest"
-"brew-cask:vnc-viewer" = "latest"
+"brew-cask:realvnc-connect-viewer" = "latest"
 "brew-cask:drawio" = "latest"
 "brew-cask:docker-desktop" = "latest"
 "brew-cask:linear" = "latest"
