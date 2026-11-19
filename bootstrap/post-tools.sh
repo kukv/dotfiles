@@ -40,6 +40,19 @@ herdr-file-viewer smarzban/herdr-file-viewer
 hunk.diff edmundmiller/herdr-plugin-hunk
 EOT
 
+# herdr's Claude Code integration: provides ~/.claude/hooks/herdr-agent-state.sh,
+# which the SessionStart hook in home/dot_claude/settings.json calls. The
+# installer also appends its own absolute-path copy of that hook to
+# settings.json, so restore the deployed (repo-managed) settings afterwards.
+if ! herdr integration status </dev/null 2>/dev/null | grep -q '^claude: current'; then
+  settings="$HOME/.claude/settings.json"
+  backup=$(mktemp)
+  cp "$settings" "$backup"
+  herdr integration install claude </dev/null
+  cat "$backup" >"$settings"
+  rm -f "$backup"
+fi
+
 # Claude Code CLI (self-updating; install once).
 if ! command -v claude >/dev/null 2>&1 && [ ! -x "$HOME/.local/bin/claude" ]; then
   curl -fsSL https://claude.ai/install.sh | bash
