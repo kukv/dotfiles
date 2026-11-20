@@ -102,6 +102,7 @@ check_mac() {
   grep -qxF '  IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"' "$h/.ssh/config" || fail "ssh config IdentityAgent"
   if grep -qE 'br-(gateway|node|external)|cluster-internal' "$h/.ssh/config"; then fail "old br-cluster hosts left in ssh config"; fi
   grep -qx 'Include ~/.ssh/config.local' "$h/.ssh/config" || fail "ssh config.local Include"
+  sed -n 2p "$h/.ssh/config" | grep -qx '# Machine-local, untracked overrides go in ~/.ssh/config.local' || fail "ssh config local note"
   if grep -q '^Host gw' "$h/.ssh/config"; then fail "home-lab hosts belong in config.local"; fi
   grep -qx 'export ALIEN_USE_NERD_FONT=1' "$h/.zshrc" || fail "Nerd Font on macOS"
   grep -q '^export SSH_AUTH_SOCK=' "$h/.zshrc" || fail "1Password agent on macOS"
@@ -147,6 +148,15 @@ in_home "$h" mise trust . >/dev/null 2>&1
 named "$h" mise bootstrap --only dotfiles --yes >/dev/null
 grep -q 'machine-local' "$h/.zshrc.local" || fail ".zshrc.local not created"
 [ "$(cat "$h/.zprofile.local")" = keep ] || fail ".zprofile.local was overwritten"
+if [ "$(uname -s)" = Darwin ]; then
+  grep -q 'machine-local' "$h/.ssh/config.local" || fail ".ssh/config.local not created"
+  [ "$(mode "$h/.ssh/config.local")" = 600 ] || fail ".ssh/config.local mode"
+  echo 'Host keep' > "$h/.ssh/config.local"
+  named "$h" mise bootstrap --only dotfiles --yes >/dev/null
+  [ "$(cat "$h/.ssh/config.local")" = 'Host keep' ] || fail ".ssh/config.local was overwritten"
+else
+  [ ! -e "$h/.ssh/config.local" ] || fail ".ssh/config.local created without an ssh config"
+fi
 
 echo "== bootstrap: a quote in git_name is passed through safely"
 h="$tmp/quote"; mkdir -p "$h"

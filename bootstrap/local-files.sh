@@ -1,5 +1,5 @@
 #!/bin/sh
-# Create the machine-local, untracked shell files once; never overwrite them.
+# Create the machine-local, untracked files once; never overwrite them.
 # Runs from the post-dotfiles hook in mise.toml on every bootstrap; keep it idempotent.
 set -eu
 # .zshrc.local holds secrets: create both files owner-only, whatever the umask.
@@ -10,4 +10,8 @@ if [ ! -e "$HOME/.zshrc.local" ]; then
 fi
 if [ ! -e "$HOME/.zprofile.local" ]; then
   printf '%s\n' '# ~/.zprofile.local — machine-local login-shell config (untracked).' >"$HOME/.zprofile.local"
+fi
+# Only where ~/.ssh/config is deployed (macOS): it Includes this file.
+if [ -e "$HOME/.ssh/config" ] && [ ! -e "$HOME/.ssh/config.local" ]; then
+  printf '%s\n' '# ~/.ssh/config.local — machine-local ssh hosts (untracked). Included before the managed hosts in ~/.ssh/config.' >"$HOME/.ssh/config.local"
 fi

@@ -1,10 +1,11 @@
 # Managed by mise [dotfiles] — edit home/dot_ssh/config.tera in kukv/dotfiles
+# Machine-local, untracked overrides go in ~/.ssh/config.local
 {%- if vars.use_1password == "true" %}
 
 Include ~/.ssh/1Password/config
 {%- endif %}
 
-# マシンごとの設定（Git 管理外）。自宅ラボのホストは kukv/home-lab の make ssh-config が書く
+# First match wins in ssh_config, so the local file comes before the hosts below.
 Include ~/.ssh/config.local
 
 Host github
