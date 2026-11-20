@@ -101,6 +101,8 @@ check_mac() {
   [ "$(mode "$h/.ssh/config")" = 600 ] || fail "ssh config mode"
   grep -qxF '  IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"' "$h/.ssh/config" || fail "ssh config IdentityAgent"
   if grep -qE 'br-(gateway|node|external)|cluster-internal' "$h/.ssh/config"; then fail "old br-cluster hosts left in ssh config"; fi
+  grep -qx 'Include ~/.ssh/config.local' "$h/.ssh/config" || fail "ssh config.local Include"
+  if grep -q '^Host gw' "$h/.ssh/config"; then fail "home-lab hosts belong in config.local"; fi
   grep -qx 'export ALIEN_USE_NERD_FONT=1' "$h/.zshrc" || fail "Nerd Font on macOS"
   grep -q '^export SSH_AUTH_SOCK=' "$h/.zshrc" || fail "1Password agent on macOS"
   # compinit runs inside `sheldon source`, so docker completions must join fpath before it.

@@ -4,6 +4,9 @@
 Include ~/.ssh/1Password/config
 {%- endif %}
 
+# マシンごとの設定（Git 管理外）。自宅ラボのホストは kukv/home-lab の make ssh-config が書く
+Include ~/.ssh/config.local
+
 Host github
   HostName github.com
   Port 22
