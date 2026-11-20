@@ -11,7 +11,9 @@ fi
 if [ ! -e "$HOME/.zprofile.local" ]; then
   printf '%s\n' '# ~/.zprofile.local — machine-local login-shell config (untracked).' >"$HOME/.zprofile.local"
 fi
-# Only where ~/.ssh/config is deployed (macOS): it Includes this file.
+# ~/.ssh/config.local is Included by ~/.ssh/config, so create it only where that file is deployed.
+# Today that is macOS only: mise.toml deploys ~/.ssh/config with variants = [{ os = "macos" }],
+# because WSL runs Windows' ssh.exe (which reads %USERPROFILE%\.ssh\config) and native Linux is not managed yet.
 if [ -e "$HOME/.ssh/config" ] && [ ! -e "$HOME/.ssh/config.local" ]; then
   printf '%s\n' '# ~/.ssh/config.local — machine-local ssh hosts (untracked). Included before the managed hosts in ~/.ssh/config.' >"$HOME/.ssh/config.local"
 fi
